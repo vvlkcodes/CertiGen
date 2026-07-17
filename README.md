@@ -1,3 +1,4 @@
+
 # CertiGen
 
 CertiGen is a Node.js + Express project for bulk certificate generation, ZIP download, email notification, employee/admin dashboards, and QR-based certificate verification.
@@ -249,3 +250,6 @@ See `DEPLOYMENT.md` for complete deployment steps.
 
 
 ##                          DEVELOPED BY VENKATA LALITH KARTHEEK VUPPULURI
+=======
+# CertiGen
+
