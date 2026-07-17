@@ -19,6 +19,8 @@ CREATE TABLE IF NOT EXISTS certificates (
     score VARCHAR(30) NOT NULL,
     passing_marks VARCHAR(30),
     total_marks VARCHAR(30),
+    roll_number VARCHAR(100),
+    he_she VARCHAR(20),
     start_date DATE NOT NULL,
     end_date DATE NOT NULL,
     email VARCHAR(150),

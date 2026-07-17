@@ -1,0 +1,169 @@
+Based on everything you've told me so far, especially that you're **not very interested in Full Stack**, here's the order I'd follow.
+
+## Phase 1 (Now → Next 3 Months)
+
+### 🎯 Focus: AI/ML Foundations
+
+✅ Python (if not already comfortable)
+
+✅ Mathematics for ML
+
+* Linear Algebra (basics)
+* Probability
+* Statistics
+
+✅ Machine Learning
+
+* Supervised Learning
+* Unsupervised Learning
+* Feature Engineering
+* Model Evaluation
+
+### Output
+
+* House Price Prediction
+* Student Performance Prediction
+* Spam Detection
+* Recommendation System
+
+Don't touch Agentic AI yet.
+
+---
+
+## Phase 2 (Month 4 → Month 6)
+
+### 🎯 Deep Learning
+
+✅ Neural Networks
+
+✅ TensorFlow / PyTorch
+
+✅ CNN
+
+✅ RNN
+
+✅ Transformers Basics
+
+### Projects
+
+* Image Classification
+* Face Mask Detection
+* Sentiment Analysis
+* Chatbot
+
+At this stage, start building a GitHub portfolio.
+
+---
+
+## Phase 3 (Month 7 → Month 8)
+
+### 🎯 Cloud Computing
+
+You don't need to become a cloud engineer.
+
+Learn only:
+
+* AWS Basics
+* EC2
+* S3
+* Lambda
+* IAM
+* Docker
+* Deployment
+
+### Projects
+
+Deploy your ML models.
+
+Example:
+
+* Diabetes Prediction App
+* Resume Screening System
+* Movie Recommendation System
+
+---
+
+## Phase 4 (Month 9 → Month 11)
+
+### 🎯 Generative AI
+
+Now enter the GenAI world.
+
+Learn:
+
+* LLM Fundamentals
+* Prompt Engineering
+* OpenAI APIs
+* Embeddings
+* Vector Databases
+* Fine-tuning concepts
+
+Projects:
+
+* PDF Chatbot
+* Resume Analyzer
+* AI Research Assistant
+
+---
+
+## Phase 5 (Month 12+)
+
+### 🎯 Agentic AI
+
+Now learn:
+
+✅ RAG
+
+✅ LangChain
+
+✅ LangGraph
+
+✅ AI Agents
+
+✅ Multi-Agent Systems
+
+✅ MCP
+
+✅ Tool Calling
+
+✅ Memory Systems
+
+Projects:
+
+* Autonomous Research Agent
+* Interview Preparation Agent
+* Personal Finance Agent
+* Multi-Agent Workflow System
+
+This is where the market is heading.
+
+---
+
+## What About Full Stack?
+
+Learn only enough to build AI applications:
+
+* HTML
+* CSS
+* JavaScript
+* React (basic)
+* FastAPI
+
+That's it.
+
+No need to become a MERN developer unless you enjoy it.
+
+---
+
+## If I Were Starting Today in 2026
+
+My priority would be:
+
+1. AI/ML ⭐⭐⭐⭐⭐
+2. Deep Learning ⭐⭐⭐⭐⭐
+3. Cloud Basics ⭐⭐⭐⭐
+4. Generative AI ⭐⭐⭐⭐⭐
+5. Agentic AI ⭐⭐⭐⭐⭐
+6. Full Stack ⭐⭐
+
+The biggest mistake I see students make is jumping directly into LangChain, RAG, and Agents without understanding ML, Deep Learning, and Transformers. Learn the foundations first, and the advanced tools will make much more sense.

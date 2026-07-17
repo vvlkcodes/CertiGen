@@ -1,0 +1,202 @@
+# 🚀 GitHub Commands Cheat Sheet
+
+Save this somewhere. These are the commands you'll use most often.
+
+```bash
+# ==========================================
+# 1. Initialize Git in a Project
+# ==========================================
+git init
+
+# ==========================================
+# 2. Check Current Status
+# ==========================================
+git status
+
+# ==========================================
+# 3. Add Files
+# ==========================================
+
+# Add all files
+git add .
+
+# Add specific file
+git add filename.py
+
+# ==========================================
+# 4. Commit Changes
+# ==========================================
+git commit -m "Your commit message"
+
+# ==========================================
+# 5. Rename Branch to Main
+# ==========================================
+git branch -M main
+
+# ==========================================
+# 6. Connect Local Project to GitHub Repository
+# ==========================================
+git remote add origin https://github.com/USERNAME/REPOSITORY.git
+
+# Verify remote
+git remote -v
+
+# ==========================================
+# 7. Push Code to GitHub
+# ==========================================
+git push -u origin main
+
+# Future pushes
+git push
+
+# ==========================================
+# 8. Pull Latest Changes from GitHub
+# ==========================================
+git pull origin main
+
+# ==========================================
+# 9. Clone Existing Repository
+# ==========================================
+git clone https://github.com/USERNAME/REPOSITORY.git
+
+# ==========================================
+# 10. View Commit History
+# ==========================================
+git log
+
+# Short version
+git log --oneline
+
+# ==========================================
+# 11. Check Current Branch
+# ==========================================
+git branch
+
+# ==========================================
+# 12. Create New Branch
+# ==========================================
+git checkout -b feature-branch
+
+# ==========================================
+# 13. Switch Branches
+# ==========================================
+git checkout main
+
+# ==========================================
+# 14. Merge Branch
+# ==========================================
+git merge feature-branch
+
+# ==========================================
+# 15. Remove Remote Connection
+# ==========================================
+git remote remove origin
+
+# ==========================================
+# 16. Undo Last Commit (Keep Files)
+# ==========================================
+git reset --soft HEAD~1
+
+# ==========================================
+# 17. Remove File from Staging
+# ==========================================
+git restore --staged filename.py
+
+# ==========================================
+# 18. Discard Local Changes
+# ==========================================
+git restore filename.py
+
+# ==========================================
+# 19. Download Latest Repository State
+# ==========================================
+git fetch
+
+# ==========================================
+# 20. Check Remote URL
+# ==========================================
+git remote -v
+```
+
+---
+
+# 📌 Most Common Workflow (90% of the Time)
+
+When you've completed some work and want to upload it to GitHub:
+
+```bash
+git status
+git add .
+git commit -m "Completed Task"
+git push
+```
+
+---
+
+# 📌 First Time Uploading a Project to GitHub
+
+```bash
+
+git init
+git add .
+git commit -m "Initial Commit"
+git branch -M main
+git remote add origin https://github.com/USERNAME/REPOSITORY.git
+git push -u origin main
+
+```
+
+---
+
+# 📌 Updating an Existing Repository
+
+```bash
+
+git add .
+git commit -m "Updated Project"
+git push
+
+```
+
+---
+
+# 📌 Cloning a Repository
+
+```bash
+
+git clone https://github.com/USERNAME/REPOSITORY.git
+cd REPOSITORY
+
+```
+
+---
+
+# 📌 Before Pushing a Project
+
+Make sure these are **NOT** uploaded:
+
+```text
+
+.venv/
+venv/
+__pycache__/
+node_modules/
+.env
+
+```
+
+Keep them inside `.gitignore`.
+
+---
+
+### 3 Commands You'll Use Every Day
+
+```bash
+
+git add .
+git commit -m "message"
+git push
+
+```
+
+If you master these three, you'll be able to handle most internship, college, and personal GitHub projects. 😄

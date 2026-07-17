@@ -24,10 +24,12 @@ const DATA_DIR = process.env.DATA_DIR || ROOT;
 const DIRS = {
     templates: path.join(FRONTEND_DIR, 'templates'),
     uploaded: path.join(DATA_DIR, 'uploaded_templates'),
+    logos: path.join(DATA_DIR, 'uploaded_logos'),
     uploads: path.join(DATA_DIR, 'uploads'),
     certificates: path.join(DATA_DIR, 'certificates')
 };
 const LOCAL_ADMIN_FILE = path.join(ROOT, 'admin.local.json');
+const CERTIFICATE_CONFIG_FILE = path.join(DATA_DIR, 'certificate-config.json');
 
 Object.values(DIRS).forEach(dir => fs.mkdirSync(dir, { recursive: true }));
 
@@ -44,6 +46,7 @@ app.use((req, res, next) => {
 });
 app.use('/templates', express.static(DIRS.templates));
 app.use('/uploaded_templates', express.static(DIRS.uploaded));
+app.use('/uploaded_logos', express.static(DIRS.logos));
 app.use('/certificates', express.static(DIRS.certificates));
 app.use(express.static(FRONTEND_DIR));
 app.get('/', (_, res) => res.sendFile(path.join(FRONTEND_DIR, 'index.html')));
@@ -155,6 +158,8 @@ async function ensureSchema() {
                 score VARCHAR(30) NOT NULL,
                 passing_marks VARCHAR(30),
                 total_marks VARCHAR(30),
+                roll_number VARCHAR(100),
+                he_she VARCHAR(20),
                 start_date DATE NOT NULL,
                 end_date DATE NOT NULL,
                 email VARCHAR(150),
@@ -168,7 +173,9 @@ async function ensureSchema() {
         const pgMigrations = [
             "ALTER TABLE certificates ADD COLUMN IF NOT EXISTS email VARCHAR(150)",
             "ALTER TABLE certificates ADD COLUMN IF NOT EXISTS passing_marks VARCHAR(30)",
-            "ALTER TABLE certificates ADD COLUMN IF NOT EXISTS total_marks VARCHAR(30)"
+            "ALTER TABLE certificates ADD COLUMN IF NOT EXISTS total_marks VARCHAR(30)",
+            "ALTER TABLE certificates ADD COLUMN IF NOT EXISTS roll_number VARCHAR(100)",
+            "ALTER TABLE certificates ADD COLUMN IF NOT EXISTS he_she VARCHAR(20)"
         ];
         for (const sql of pgMigrations) {
             try { await db.query(sql); } catch (_) { /* skip */ }
@@ -197,6 +204,8 @@ async function ensureSchema() {
             score VARCHAR(30) NOT NULL,
             passing_marks VARCHAR(30),
             total_marks VARCHAR(30),
+            roll_number VARCHAR(100),
+            he_she VARCHAR(20),
             start_date DATE NOT NULL,
             end_date DATE NOT NULL,
             email VARCHAR(150),
@@ -210,7 +219,9 @@ async function ensureSchema() {
     const migrations = [
         "ALTER TABLE certificates ADD COLUMN email VARCHAR(150)",
         "ALTER TABLE certificates ADD COLUMN passing_marks VARCHAR(30)",
-        "ALTER TABLE certificates ADD COLUMN total_marks VARCHAR(30)"
+        "ALTER TABLE certificates ADD COLUMN total_marks VARCHAR(30)",
+        "ALTER TABLE certificates ADD COLUMN roll_number VARCHAR(100)",
+        "ALTER TABLE certificates ADD COLUMN he_she VARCHAR(20)"
     ];
     for (const sql of migrations) {
         try { await db.query(sql); } catch (_) { /* column already exists, skip */ }
@@ -245,10 +256,17 @@ async function upsertEmployee({ name, email, password, phone, role }) {
 }
 
 async function upsertCertificate(student) {
+    const record = {
+        ...student,
+        course_type: student.course_type || '',
+        score: student.score || '0',
+        start_date: student.start_date || '1970-01-01',
+        end_date: student.end_date || '1970-01-01'
+    };
     if (isPostgres) {
         await db.query(
-            `INSERT INTO certificates (name, reg_no, course_name, course_type, score, passing_marks, total_marks, start_date, end_date, email)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `INSERT INTO certificates (name, reg_no, course_name, course_type, score, passing_marks, total_marks, roll_number, he_she, start_date, end_date, email)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
              ON CONFLICT (reg_no) DO UPDATE SET
              name = EXCLUDED.name,
              course_name = EXCLUDED.course_name,
@@ -256,19 +274,21 @@ async function upsertCertificate(student) {
              score = EXCLUDED.score,
              passing_marks = EXCLUDED.passing_marks,
              total_marks = EXCLUDED.total_marks,
+             roll_number = EXCLUDED.roll_number,
+             he_she = EXCLUDED.he_she,
              start_date = EXCLUDED.start_date,
              end_date = EXCLUDED.end_date,
              email = EXCLUDED.email`,
-            [student.name, student.reg_no, student.course_name, student.course_type, student.score, student.passing_marks || null, student.total_marks || null, student.start_date, student.end_date, student.email || null]
+            [record.name, record.reg_no, record.course_name, record.course_type, record.score, record.passing_marks || null, record.total_marks || null, record.roll_number || null, record.he_she || null, record.start_date, record.end_date, record.email || null]
         );
         return;
     }
 
     await db.query(
-        `INSERT INTO certificates (name, reg_no, course_name, course_type, score, passing_marks, total_marks, start_date, end_date, email)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-         ON DUPLICATE KEY UPDATE name=VALUES(name), course_name=VALUES(course_name), course_type=VALUES(course_type), score=VALUES(score), passing_marks=VALUES(passing_marks), total_marks=VALUES(total_marks), start_date=VALUES(start_date), end_date=VALUES(end_date), email=VALUES(email)`,
-        [student.name, student.reg_no, student.course_name, student.course_type, student.score, student.passing_marks || null, student.total_marks || null, student.start_date, student.end_date, student.email || null]
+        `INSERT INTO certificates (name, reg_no, course_name, course_type, score, passing_marks, total_marks, roll_number, he_she, start_date, end_date, email)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE name=VALUES(name), course_name=VALUES(course_name), course_type=VALUES(course_type), score=VALUES(score), passing_marks=VALUES(passing_marks), total_marks=VALUES(total_marks), roll_number=VALUES(roll_number), he_she=VALUES(he_she), start_date=VALUES(start_date), end_date=VALUES(end_date), email=VALUES(email)`,
+        [record.name, record.reg_no, record.course_name, record.course_type, record.score, record.passing_marks || null, record.total_marks || null, record.roll_number || null, record.he_she || null, record.start_date, record.end_date, record.email || null]
     );
 }
 
@@ -353,16 +373,253 @@ const templateUpload = multer({
         filename: (_, file, cb) => cb(null, `${Date.now()}_${file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_')}`)
     })
 });
+const logoUpload = multer({
+    storage: multer.diskStorage({
+        destination: (_, __, cb) => cb(null, DIRS.logos),
+        filename: (_, file, cb) => cb(null, `${Date.now()}_${file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_')}`)
+    }),
+    fileFilter: (_, file, cb) => {
+        const ok = /\.(png|jpe?g)$/i.test(file.originalname || '') && /^image\/(png|jpe?g)$/i.test(file.mimetype || '');
+        cb(ok ? null : new Error('Logo must be a PNG, JPG, or JPEG file.'), ok);
+    }
+});
 
 let selectedTemplate = { name: 'template1.jpg', source: 'built_in', path: path.join(DIRS.templates, 'template1.jpg') };
 let uploadedStudents = [];
 let uploadSummary = { totalRows: 0, validRows: 0, invalidRows: 0, courseNames: [], invalidParticipants: [] };
 let lastGeneration = null;
 
+const CANVAS_SIZE = { width: 1000, height: 707 };
+const DEFAULT_PARAGRAPH = 'This certifies that {name} has successfully completed the course {course_name} and fulfilled all requirements.';
+const DEFAULT_CERTIFICATE_TITLE = 'Certificate Of Completion';
+const DEFAULT_INTRO_TEXT = 'We hereby proudly announce that';
+const FONT_FAMILIES = ['Times New Roman', 'Georgia', 'Garamond', 'Arial', 'Helvetica', 'Verdana', 'Open Sans', 'Roboto', 'Inter', 'Playfair Display', 'Cinzel', 'Merriweather', 'Poppins', 'Montserrat', 'Courier'];
+const DEFAULT_ELEMENT_ORDER = ['institutionName', 'certificateTitle', 'introText', 'studentName', 'rollNumber', 'customParagraph', 'courseName', 'heShe', 'courseType', 'startDate', 'endDate', 'score', 'signatory1', 'registrationNumber', 'logo', 'qrCode', 'qrLabel'];
+const DEFAULT_CERTIFICATE_CONFIG = {
+    institutionName: 'CertiGen College',
+    certificateTitle: DEFAULT_CERTIFICATE_TITLE,
+    introText: DEFAULT_INTRO_TEXT,
+    minimumQualifyingScore: 35,
+    paragraphTemplate: DEFAULT_PARAGRAPH,
+    elements: {
+        qrCode: true,
+        qrLabel: true,
+        institutionName: true,
+        certificateTitle: true,
+        introText: true,
+        registrationNumber: true,
+        rollNumber: true,
+        heShe: true,
+        courseName: true,
+        courseType: true,
+        startDate: true,
+        endDate: true,
+        score: true,
+        signatory1: true,
+        logo: false,
+        studentName: true,
+        customParagraph: true
+    },
+    elementOrder: DEFAULT_ELEMENT_ORDER,
+    layout: {
+        institutionName: { x: 210, y: 52, w: 580, h: 34, fontSize: 20, fontFamily: 'Helvetica', fontWeight: 'bold', italic: false, underline: false, color: '#13284b', align: 'center', zIndex: 1, locked: false, deleted: false },
+        certificateTitle: { x: 190, y: 93, w: 620, h: 72, fontSize: 34, fontFamily: 'Times New Roman', fontWeight: 'bold', italic: false, underline: false, color: '#13284b', align: 'center', zIndex: 2, locked: false, deleted: false },
+        introText: { x: 190, y: 174, w: 620, h: 34, fontSize: 15, fontFamily: 'Helvetica', fontWeight: 'normal', italic: true, underline: false, color: '#536685', align: 'center', zIndex: 3, locked: false, deleted: false },
+        studentName: { x: 190, y: 218, w: 620, h: 58, fontSize: 36, fontFamily: 'Times New Roman', fontWeight: 'bold', italic: false, underline: true, color: '#0d1e39', align: 'center', zIndex: 4, locked: false, deleted: false, kind: 'text' },
+        rollNumber: { x: 330, y: 276, w: 340, h: 30, fontSize: 15, fontFamily: 'Helvetica', fontWeight: 'bold', italic: false, underline: true, color: '#20385f', align: 'center', zIndex: 5, locked: false, deleted: false, kind: 'text' },
+        customParagraph: { x: 190, y: 314, w: 620, h: 76, fontSize: 17, fontFamily: 'Helvetica', fontWeight: 'normal', italic: false, underline: false, color: '#536685', align: 'center', zIndex: 6, locked: false, deleted: false, kind: 'text' },
+        courseName: { x: 230, y: 399, w: 540, h: 50, fontSize: 25, fontFamily: 'Times New Roman', fontWeight: 'normal', italic: false, underline: true, color: '#13284b', align: 'center', zIndex: 7, locked: false, deleted: false, kind: 'text' },
+        heShe: { x: 706, y: 326, w: 82, h: 28, fontSize: 15, fontFamily: 'Helvetica', fontWeight: 'bold', italic: false, underline: true, color: '#20385f', align: 'center', zIndex: 8, locked: false, deleted: false, kind: 'text' },
+        courseType: { x: 320, y: 451, w: 360, h: 28, fontSize: 14, fontFamily: 'Helvetica', fontWeight: 'bold', italic: false, underline: true, color: '#20385f', align: 'center', zIndex: 9, locked: false, deleted: false, kind: 'text' },
+        startDate: { x: 288, y: 488, w: 190, h: 26, fontSize: 13, fontFamily: 'Helvetica', fontWeight: 'normal', italic: false, underline: true, color: '#20385f', align: 'center', zIndex: 10, locked: false, deleted: false, kind: 'text' },
+        endDate: { x: 522, y: 488, w: 190, h: 26, fontSize: 13, fontFamily: 'Helvetica', fontWeight: 'normal', italic: false, underline: true, color: '#20385f', align: 'center', zIndex: 11, locked: false, deleted: false, kind: 'text' },
+        score: { x: 405, y: 524, w: 190, h: 26, fontSize: 13, fontFamily: 'Helvetica', fontWeight: 'normal', italic: false, underline: true, color: '#20385f', align: 'center', zIndex: 12, locked: false, deleted: false, kind: 'text' },
+        signatory1: { source: 'signatory', x: 96, y: 618, w: 210, h: 54, fontSize: 12, fontFamily: 'Helvetica', fontWeight: 'bold', italic: false, underline: false, color: '#223a62', align: 'center', zIndex: 13, locked: false, deleted: false, kind: 'signatory', name: 'Authorized Signatory' },
+        registrationNumber: { x: 400, y: 640, w: 220, h: 28, fontSize: 12, fontFamily: 'Helvetica', fontWeight: 'bold', italic: false, underline: true, color: '#223a62', align: 'center', zIndex: 14, locked: false, deleted: false, kind: 'text' },
+        logo: { x: 452, y: 42, w: 96, h: 96, fontSize: 12, fontFamily: 'Helvetica', fontWeight: 'bold', italic: false, underline: false, color: '#223a62', align: 'center', zIndex: 15, locked: false, deleted: true, kind: 'image', imageUrl: '' },
+        qrCode: { x: 804, y: 488, w: 106, h: 106, fontSize: 12, fontFamily: 'Helvetica', fontWeight: 'bold', italic: false, underline: false, color: '#223a62', align: 'center', zIndex: 16, locked: false, deleted: false, kind: 'qr' },
+        qrLabel: { x: 768, y: 616, w: 178, h: 26, fontSize: 12, fontFamily: 'Helvetica', fontWeight: 'bold', italic: false, underline: false, color: '#223a62', align: 'center', zIndex: 17, locked: false, deleted: false, kind: 'text' }
+    },
+    presets: [
+        { id: 'course-completion', name: 'Course Completion', config: null },
+        { id: 'internship-certificate', name: 'Internship Certificate', config: null },
+        { id: 'workshop-certificate', name: 'Workshop Certificate', config: null },
+        { id: 'participation-certificate', name: 'Participation Certificate', config: null },
+        { id: 'appreciation-certificate', name: 'Appreciation Certificate', config: null }
+    ]
+};
+
+function deepMerge(base, overrides) {
+    if (!overrides || typeof overrides !== 'object') return { ...base };
+    const merged = Array.isArray(base) ? [...base] : { ...base };
+    Object.entries(overrides).forEach(([key, value]) => {
+        if (value && typeof value === 'object' && !Array.isArray(value) && base[key] && typeof base[key] === 'object') {
+            merged[key] = deepMerge(base[key], value);
+        } else {
+            merged[key] = value;
+        }
+    });
+    return merged;
+}
+
+function loadCertificateConfig() {
+    try {
+        if (!fs.existsSync(CERTIFICATE_CONFIG_FILE)) return deepMerge(DEFAULT_CERTIFICATE_CONFIG, {});
+        return normalizeCertificateConfig(JSON.parse(fs.readFileSync(CERTIFICATE_CONFIG_FILE, 'utf8')));
+    } catch (error) {
+        console.warn('Certificate config could not be read:', error.message);
+        return deepMerge(DEFAULT_CERTIFICATE_CONFIG, {});
+    }
+}
+
+let certificateConfig = loadCertificateConfig();
+
 // This makes column names easier to match from different Excel files.
 const normalize = value => String(value || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
 // This keeps PDF file names safe for Windows folders.
 const safeName = value => String(value || 'certificate').replace(/[<>:"/\\|?*\x00-\x1F]/g, '').replace(/\s+/g, '_').slice(0, 80) || 'certificate';
+const REQUIRED_EXCEL_COLUMN_GROUPS = [
+    { label: 'name', aliases: ['name_of_candidate', 'candidate_name', 'student_name', 'name'] },
+    { label: 'registration_number', aliases: ['id_number', 'reg_number', 'registration_number', 'reg_no', 'id_no', 'id'] },
+    { label: 'course_name', aliases: ['name_of_course', 'course_name', 'course'] },
+    { label: 'roll_number', aliases: ['roll_number'] },
+    { label: 'he_she', aliases: ['he_she'] }
+];
+
+function cleanText(value, fallback = '') {
+    const text = String(value ?? '').trim();
+    return text || fallback;
+}
+
+function cleanNumber(value, fallback, min, max) {
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric)) return fallback;
+    return Math.min(Math.max(numeric, min), max);
+}
+
+function normalizeLayoutBox(box, fallback) {
+    const safe = fallback || {};
+    const source = cleanText(box?.source, safe.source || '');
+    const kind = ['text', 'image', 'shape', 'signatory', 'qr'].includes(box?.kind) ? box.kind : (safe.kind || (source === 'signatory' ? 'signatory' : 'text'));
+    return {
+        source,
+        kind,
+        x: cleanNumber(box?.x, safe.x || 0, 0, CANVAS_SIZE.width),
+        y: cleanNumber(box?.y, safe.y || 0, 0, CANVAS_SIZE.height),
+        w: cleanNumber(box?.w, safe.w || 120, 24, CANVAS_SIZE.width),
+        h: cleanNumber(box?.h, safe.h || 30, 18, CANVAS_SIZE.height),
+        fontSize: cleanNumber(box?.fontSize, safe.fontSize || 16, 8, 96),
+        fontFamily: FONT_FAMILIES.includes(box?.fontFamily) ? box.fontFamily : (safe.fontFamily || 'Helvetica'),
+        fontWeight: ['normal', 'bold'].includes(box?.fontWeight) ? box.fontWeight : (safe.fontWeight || 'normal'),
+        italic: typeof box?.italic === 'boolean' ? box.italic : Boolean(safe.italic),
+        underline: typeof box?.underline === 'boolean' ? box.underline : Boolean(safe.underline),
+        color: /^#[0-9a-f]{6}$/i.test(String(box?.color || '')) ? box.color : (safe.color || '#13213f'),
+        align: ['left', 'center', 'right', 'justify'].includes(box?.align) ? box.align : (safe.align || 'center'),
+        letterSpacing: cleanNumber(box?.letterSpacing, safe.letterSpacing || 0, -5, 30),
+        opacity: cleanNumber(box?.opacity, safe.opacity ?? 1, 0, 1),
+        rotation: cleanNumber(box?.rotation, safe.rotation || 0, -360, 360),
+        zIndex: cleanNumber(box?.zIndex, safe.zIndex || 1, 0, 10000),
+        locked: typeof box?.locked === 'boolean' ? box.locked : Boolean(safe.locked),
+        deleted: typeof box?.deleted === 'boolean' ? box.deleted : Boolean(safe.deleted),
+        name: cleanText(box?.name, safe.name || ''),
+        text: box?.text !== undefined ? String(box.text) : (safe.text !== undefined ? String(safe.text) : undefined),
+        imageUrl: cleanText(box?.imageUrl, safe.imageUrl || ''),
+        shape: cleanText(box?.shape, safe.shape || 'rectangle')
+    };
+}
+
+function normalizeCertificateConfig(input = {}) {
+    const merged = deepMerge(DEFAULT_CERTIFICATE_CONFIG, input);
+    if (merged.layout?.signature && !merged.layout?.signatory1) {
+        merged.layout.signatory1 = {
+            ...merged.layout.signature,
+            source: 'signatory',
+            kind: 'signatory',
+            h: Math.max(Number(merged.layout.signature.h) || 28, 54),
+            name: merged.layout.signature.name || 'Authorized Signatory'
+        };
+        merged.elements.signatory1 = merged.elements.signature !== false;
+        merged.elementOrder = (merged.elementOrder || DEFAULT_ELEMENT_ORDER).map(key => key === 'signature' ? 'signatory1' : key);
+    }
+    const elements = { ...DEFAULT_CERTIFICATE_CONFIG.elements, ...(merged.elements || {}) };
+    elements.institutionName = true;
+    elements.certificateTitle = true;
+    elements.courseName = true;
+    elements.studentName = true;
+    elements.customParagraph = true;
+    elements.introText = true;
+    elements.qrLabel = Boolean(elements.qrCode);
+    Object.keys(merged.layout || {}).forEach(key => {
+        if (merged.layout[key]?.source === 'signatory' || merged.layout[key]?.kind === 'signatory') elements[key] = merged.elements?.[key] !== false;
+        if (merged.layout[key]?.kind === 'image') elements[key] = merged.elements?.[key] !== false;
+    });
+
+    const layout = {};
+    Object.entries(DEFAULT_CERTIFICATE_CONFIG.layout).forEach(([key, fallback]) => {
+        layout[key] = normalizeLayoutBox(merged.layout?.[key], fallback);
+        if (layout[key].x + layout[key].w > CANVAS_SIZE.width) layout[key].x = CANVAS_SIZE.width - layout[key].w;
+        if (layout[key].y + layout[key].h > CANVAS_SIZE.height) layout[key].y = CANVAS_SIZE.height - layout[key].h;
+    });
+    Object.entries(merged.layout || {}).forEach(([key, box]) => {
+        if (key === 'signature') return;
+        if (layout[key] || !box || typeof box !== 'object') return;
+        const source = box.source && (DEFAULT_CERTIFICATE_CONFIG.layout[box.source] || box.source === 'signatory') ? box.source : 'customParagraph';
+        const fallback = source === 'signatory' ? DEFAULT_CERTIFICATE_CONFIG.layout.signatory1 : DEFAULT_CERTIFICATE_CONFIG.layout[source];
+        layout[key] = normalizeLayoutBox({ ...box, source }, fallback);
+        if (layout[key].x + layout[key].w > CANVAS_SIZE.width) layout[key].x = CANVAS_SIZE.width - layout[key].w;
+        if (layout[key].y + layout[key].h > CANVAS_SIZE.height) layout[key].y = CANVAS_SIZE.height - layout[key].h;
+    });
+
+    const elementOrder = Array.isArray(merged.elementOrder)
+        ? [...new Set([...merged.elementOrder, ...DEFAULT_ELEMENT_ORDER, ...Object.keys(layout)])].filter(key => layout[key])
+        : [...DEFAULT_ELEMENT_ORDER, ...Object.keys(layout).filter(key => !DEFAULT_ELEMENT_ORDER.includes(key))];
+
+    const presets = Array.isArray(merged.presets)
+        ? merged.presets.map((preset, index) => ({
+            id: cleanText(preset.id, `preset-${index + 1}`).replace(/[^a-zA-Z0-9_-]/g, '-').toLowerCase(),
+            name: cleanText(preset.name, `Preset ${index + 1}`),
+            config: preset.config && typeof preset.config === 'object' ? normalizeCertificateConfig({ ...preset.config, presets: [] }) : null
+        })).slice(0, 20)
+        : DEFAULT_CERTIFICATE_CONFIG.presets;
+
+    return {
+        institutionName: cleanText(merged.institutionName, DEFAULT_CERTIFICATE_CONFIG.institutionName),
+        certificateTitle: cleanText(merged.certificateTitle, DEFAULT_CERTIFICATE_TITLE),
+        introText: cleanText(merged.introText, DEFAULT_INTRO_TEXT),
+        minimumQualifyingScore: cleanNumber(merged.minimumQualifyingScore, DEFAULT_CERTIFICATE_CONFIG.minimumQualifyingScore, 0, 100000),
+        paragraphTemplate: cleanText(merged.paragraphTemplate, DEFAULT_PARAGRAPH),
+        elements,
+        elementOrder,
+        layout,
+        presets
+    };
+}
+
+function saveCertificateConfig(nextConfig) {
+    certificateConfig = normalizeCertificateConfig(nextConfig);
+    fs.writeFileSync(CERTIFICATE_CONFIG_FILE, JSON.stringify(certificateConfig, null, 2));
+    return certificateConfig;
+}
+
+function resetCertificateConfig() {
+    certificateConfig = normalizeCertificateConfig(DEFAULT_CERTIFICATE_CONFIG);
+    fs.writeFileSync(CERTIFICATE_CONFIG_FILE, JSON.stringify(certificateConfig, null, 2));
+    return certificateConfig;
+}
+
+function cloneConfigForPreset(config) {
+    const copy = normalizeCertificateConfig(config);
+    return {
+        institutionName: copy.institutionName,
+        certificateTitle: copy.certificateTitle,
+        introText: copy.introText,
+        minimumQualifyingScore: copy.minimumQualifyingScore,
+        paragraphTemplate: copy.paragraphTemplate,
+        elements: copy.elements,
+        elementOrder: copy.elementOrder,
+        layout: copy.layout
+    };
+}
 
 // This finds the local network IP so QR links can work on other devices too.
 function getLanIp() {
@@ -402,7 +659,7 @@ const pick = (row, keys) => keys.map(key => row[key]).find(v => v !== undefined 
 // When the Excel sheet has a passing_marks column, that value is used per-row.
 // If passing_marks is absent, the fallback threshold of 35 is used.
 function invalidReason(student) {
-    const requiredCore = ['name', 'reg_no', 'course_name', 'start_date', 'end_date', 'score', 'email', 'course_type'];
+    const requiredCore = ['name', 'reg_no', 'course_name', 'roll_number', 'he_she'];
     const missingFields = requiredCore
         .filter(key => !String(student[key] || '').trim())
         .map(key => key.replace(/_/g, ' '));
@@ -411,20 +668,8 @@ function invalidReason(student) {
         return `Missing: ${missingFields.join(', ')}`;
     }
 
-    const scoreValue = Number(student.score);
-    if (Number.isNaN(scoreValue)) return 'Score is not a valid number';
-
-    const passingValue = Number(student.passing_marks);
-    if (student.passing_marks && !Number.isNaN(passingValue)) {
-        if (scoreValue < passingValue) {
-            const outOf = student.total_marks ? ` out of ${student.total_marks}` : '';
-            return `Score ${student.score} is below the passing mark of ${student.passing_marks}${outOf}`;
-        }
-    } else {
-        if (scoreValue <= 35) return 'Score is 35 or below (default passing threshold)';
-    }
-
-    return 'Participant is not eligible';
+    if (student.score && Number.isNaN(Number(student.score))) return 'Score is not a valid number';
+    return 'Row could not be processed';
 }
 
 // This combines built-in and uploaded templates for the UI.
@@ -437,8 +682,8 @@ const templateList = () => [
     }))
 ];
 
-// This reads Excel rows and keeps only students with complete valid details.
-// Eligibility uses passing_marks from the row when present; falls back to score > 35.
+// This reads Excel rows and keeps students with enough data to generate.
+// Score eligibility is applied later only when the Score element is enabled.
 function mapStudents(rows) {
     const validRows = [];
     const courseNames = new Set();
@@ -456,6 +701,8 @@ function mapStudents(rows) {
         const student = {
             name:         String(pick(row, ['name_of_candidate', 'candidate_name', 'student_name', 'name'])).trim(),
             reg_no:       String(pick(row, ['id_number', 'reg_number', 'registration_number', 'reg_no', 'id_no', 'id'])).trim(),
+            roll_number:  String(pick(row, ['roll_number', 'roll_no', 'student_roll_number', 'roll'])).trim(),
+            he_she:       String(pick(row, ['he_she', 'pronoun', 'gender_pronoun'])).trim(),
             course_name:  String(pick(row, ['name_of_course', 'course_name', 'course'])).trim(),
             start_date:   formatDate(pick(row, ['starting_date_of_the_course', 'start_date', 'course_start_date', 'starting_date'])),
             end_date:     formatDate(pick(row, ['ending_date_of_the_course', 'end_date', 'course_end_date', 'ending_date'])),
@@ -466,24 +713,14 @@ function mapStudents(rows) {
             total_marks:   rawTotal
         };
 
-        const scoreValue   = Number(student.score);
-        const passingValue = Number(student.passing_marks);
+        const scoreValue = Number(student.score);
 
-        // Check required core fields (passing_marks and total_marks are optional).
-        const requiredCore = ['name', 'reg_no', 'course_name', 'start_date', 'end_date', 'score', 'email', 'course_type'];
+        // Only the identity and mandatory course fields are required at upload time.
+        const requiredCore = ['name', 'reg_no', 'course_name', 'roll_number', 'he_she'];
         const hasRequiredFields = requiredCore.every(key => Boolean(String(student[key] || '').trim()));
+        const hasValidScore = !student.score || !Number.isNaN(scoreValue);
 
-        // Determine eligibility: use the row's passing_marks if provided, otherwise fall back to > 35.
-        let isEligible = false;
-        if (hasRequiredFields && !Number.isNaN(scoreValue)) {
-            if (student.passing_marks && !Number.isNaN(passingValue)) {
-                isEligible = scoreValue >= passingValue;
-            } else {
-                isEligible = scoreValue > 35;
-            }
-        }
-
-        if (isEligible) {
+        if (hasRequiredFields && hasValidScore) {
             validRows.push(student);
             courseNames.add(student.course_name);
         } else {
@@ -492,6 +729,8 @@ function mapStudents(rows) {
                 rowNumber:    index + 2,
                 name:         student.name         || 'No name',
                 reg_no:       student.reg_no        || 'No registration number',
+                roll_number:  student.roll_number   || 'No roll number',
+                he_she:       student.he_she        || 'No he/she value',
                 course_name:  student.course_name   || 'No course',
                 email:        student.email         || 'No email',
                 score:        student.score         || 'No score',
@@ -535,7 +774,7 @@ async function sendGenerationMail({ employeeEmail, zipName, zipPath, zipUrl, gen
                 const passingInfo = person.passing_marks
                     ? ` | Passing Marks: ${person.passing_marks}${person.total_marks ? ` / ${person.total_marks}` : ''}`
                     : '';
-                return `Row ${person.rowNumber}: ${person.name} | Reg No: ${person.reg_no} | Course: ${person.course_name} | Email: ${person.email} | Score: ${person.score}${passingInfo} | Reason: ${person.reason}`;
+                return `Row ${person.rowNumber}: ${person.name} | Reg No: ${person.reg_no} | Roll No: ${person.roll_number || ''} | He/She: ${person.he_she || ''} | Course: ${person.course_name} | Email: ${person.email} | Score: ${person.score}${passingInfo} | Reason: ${person.reason}`;
             }).join('\n')
             : 'No ineligible participants in this upload.';
 
@@ -578,35 +817,219 @@ async function sendGenerationMail({ employeeEmail, zipName, zipPath, zipUrl, gen
     }
 }
 
-// This draws one full certificate page and adds a QR code for verification.
-function drawCertificate(doc, student, verifyUrl) {
+function studentPlaceholders(student, config) {
+    return {
+        NAME: student.name || '',
+        name: student.name || '',
+        COURSE_NAME: student.course_name || '',
+        course_name: student.course_name || '',
+        COURSE_TYPE: student.course_type || '',
+        course_type: student.course_type || '',
+        START_DATE: student.start_date || '',
+        start_date: student.start_date || '',
+        END_DATE: student.end_date || '',
+        end_date: student.end_date || '',
+        SCORE: student.score || '',
+        score: student.score || '',
+        REGISTRATION_NUMBER: student.reg_no || '',
+        registration_number: student.reg_no || '',
+        ROLL_NUMBER: student.roll_number || '',
+        roll_number: student.roll_number || '',
+        HE_SHE: student.he_she || '',
+        he_she: student.he_she || '',
+        INSTITUTION_NAME: config.institutionName || '',
+        institution_name: config.institutionName || ''
+    };
+}
+
+function missingExcelColumns(rows) {
+    const headers = new Set();
+    rows.forEach(row => Object.keys(row || {}).forEach(key => headers.add(normalize(key))));
+    return REQUIRED_EXCEL_COLUMN_GROUPS
+        .filter(group => !group.aliases.some(alias => headers.has(alias)))
+        .map(group => group.label);
+}
+
+function renderTemplateText(template, student, config) {
+    const values = studentPlaceholders(student, config);
+    return String(template || '').replace(/\{([a-zA-Z_]+)\}/g, (_, key) => values[key] ?? values[key.toUpperCase()] ?? values[key.toLowerCase()] ?? '');
+}
+
+function pdfFontName(box) {
+    const serifFonts = ['Times New Roman', 'Georgia', 'Garamond', 'Playfair Display', 'Cinzel', 'Merriweather'];
+    const family = serifFonts.includes(box.fontFamily) ? 'Times' : box.fontFamily === 'Courier' ? 'Courier' : 'Helvetica';
+    if (family === 'Times') {
+        if (box.fontWeight === 'bold' && box.italic) return 'Times-BoldItalic';
+        if (box.fontWeight === 'bold') return 'Times-Bold';
+        if (box.italic) return 'Times-Italic';
+        return 'Times-Roman';
+    }
+    if (family === 'Courier') {
+        if (box.fontWeight === 'bold' && box.italic) return 'Courier-BoldOblique';
+        if (box.fontWeight === 'bold') return 'Courier-Bold';
+        if (box.italic) return 'Courier-Oblique';
+        return 'Courier';
+    }
+    if (box.fontWeight === 'bold' && box.italic) return 'Helvetica-BoldOblique';
+    if (box.fontWeight === 'bold') return 'Helvetica-Bold';
+    if (box.italic) return 'Helvetica-Oblique';
+    return 'Helvetica';
+}
+
+function scaledBox(doc, box) {
+    const sx = doc.page.width / CANVAS_SIZE.width;
+    const sy = doc.page.height / CANVAS_SIZE.height;
+    return {
+        x: box.x * sx,
+        y: box.y * sy,
+        w: box.w * sx,
+        h: box.h * sy,
+        fontSize: box.fontSize * Math.min(sx, sy)
+    };
+}
+
+function drawFittedText(doc, text, box) {
+    const b = scaledBox(doc, box);
+    let fontSize = b.fontSize;
+    const minSize = 7;
+    doc.save();
+    doc.rotate(Number(box.rotation) || 0, { origin: [b.x + b.w / 2, b.y + b.h / 2] });
+    doc.opacity(box.opacity ?? 1);
+    doc.font(pdfFontName(box));
+    while (fontSize > minSize) {
+        doc.fontSize(fontSize);
+        const height = doc.heightOfString(text, { width: b.w, align: box.align, characterSpacing: Number(box.letterSpacing) || 0 });
+        if (height <= b.h) break;
+        fontSize -= 1;
+    }
+    doc.fillColor(box.color).fontSize(fontSize).text(text, b.x, b.y, {
+        width: b.w,
+        height: b.h,
+        align: box.align,
+        characterSpacing: Number(box.letterSpacing) || 0,
+        underline: Boolean(box.underline),
+        ellipsis: true
+    });
+    doc.restore();
+}
+
+function drawSignatory(doc, box) {
+    const b = scaledBox(doc, box);
+    doc.save();
+    doc.rotate(Number(box.rotation) || 0, { origin: [b.x + b.w / 2, b.y + b.h / 2] });
+    doc.opacity(box.opacity ?? 1);
+    doc.strokeColor(box.color || '#223a62').lineWidth(1);
+    const lineY = b.y + Math.min(b.h * 0.35, 22);
+    doc.moveTo(b.x + b.w * 0.08, lineY).lineTo(b.x + b.w * 0.92, lineY).stroke();
+    doc.restore();
+    drawFittedText(doc, box.name || 'Authorized Signatory', { ...box, y: box.y + box.h * 0.42, h: box.h * 0.5 });
+}
+
+function imagePathFromUrl(imageUrl) {
+    const value = String(imageUrl || '');
+    if (!value.startsWith('/uploaded_logos/')) return null;
+    const filePath = path.join(DIRS.logos, path.basename(decodeURIComponent(value)));
+    return fs.existsSync(filePath) ? filePath : null;
+}
+
+function drawImageElement(doc, box) {
+    const filePath = imagePathFromUrl(box.imageUrl);
+    if (!filePath) return;
+    const b = scaledBox(doc, box);
+    doc.save();
+    doc.rotate(Number(box.rotation) || 0, { origin: [b.x + b.w / 2, b.y + b.h / 2] });
+    doc.opacity(box.opacity ?? 1);
+    doc.image(filePath, b.x, b.y, { fit: [b.w, b.h], align: 'center', valign: 'center' });
+    doc.restore();
+}
+
+function drawShapeElement(doc, box) {
+    const b = scaledBox(doc, box);
+    doc.save();
+    doc.rotate(Number(box.rotation) || 0, { origin: [b.x + b.w / 2, b.y + b.h / 2] });
+    doc.opacity(box.opacity ?? 1);
+    doc.fillColor(box.color || '#20385f').rect(b.x, b.y, b.w, b.h).fill();
+    doc.restore();
+}
+
+function elementText(key, student, config) {
+    const box = config.layout?.[key] || {};
+    const sourceKey = box.source || key;
+    const values = {
+        institutionName: config.institutionName,
+        certificateTitle: config.certificateTitle,
+        introText: config.introText,
+        studentName: student.name,
+        rollNumber: student.roll_number ? `Roll No: ${student.roll_number}` : '',
+        customParagraph: renderTemplateText(config.paragraphTemplate, student, config),
+        courseName: student.course_name,
+        heShe: student.he_she || '',
+        courseType: student.course_type ? `Course Type: ${student.course_type}` : '',
+        registrationNumber: student.reg_no ? `Reg. No: ${student.reg_no}` : '',
+        startDate: student.start_date ? `Start Date: ${student.start_date}` : '',
+        endDate: student.end_date ? `End Date: ${student.end_date}` : '',
+        score: student.score ? `Score Achieved: ${student.score}` : '',
+        signatory: config.layout?.[key]?.name || '',
+        qrLabel: 'QR Verification'
+    };
+    return values[sourceKey] || values[key] || renderTemplateText(box.text || '', student, config);
+}
+
+function certificateElementsForGeneration(config) {
+    return (config.elementOrder || Object.keys(config.layout))
+        .filter(key => config.layout[key])
+        .sort((a, b) => (config.layout[a].zIndex || 0) - (config.layout[b].zIndex || 0))
+        .filter(key => {
+            if (config.layout[key].deleted) return false;
+            const sourceKey = config.layout[key].source || key;
+            if (sourceKey === 'institutionName' || sourceKey === 'courseName' || sourceKey === 'certificateTitle' || sourceKey === 'introText' || sourceKey === 'studentName' || sourceKey === 'customParagraph' || sourceKey === 'rollNumber' || sourceKey === 'heShe' || sourceKey === 'signatory') return true;
+            return Boolean(config.elements[sourceKey]);
+        });
+}
+
+function isScoreEligible(student, config) {
+    if (!config.elements.score) return true;
+    const score = Number(student.score);
+    return Number.isFinite(score) && score >= Number(config.minimumQualifyingScore);
+}
+
+function eligibilityReason(student, config) {
+    if (!student.score) return 'Score is required because Score Achieved is enabled.';
+    if (Number.isNaN(Number(student.score))) return 'Score is not a valid number.';
+    return `Score ${student.score} is below the qualifying score of ${config.minimumQualifyingScore}.`;
+}
+
+// This draws one full certificate page using the saved layout and optional QR verification.
+async function drawCertificate(doc, student, verifyUrl, config = certificateConfig) {
     const w = doc.page.width;
     const h = doc.page.height;
-    const cardW = 520;
-    const x = (w - cardW) / 2;
-    const detailW = 360;
-    const detailX = (w - detailW) / 2;
     doc.image(selectedTemplate.path, 0, 0, { width: w, height: doc.page.height });
-    doc.save();
-    doc.roundedRect(x - 28, 56, cardW + 56, 306, 22).fillOpacity(0.82).fill('#fffdf8');
-    doc.roundedRect(detailX - 24, 380, detailW + 48, 116, 18).fillOpacity(0.76).fill('#fffdf8');
-    doc.restore();
-    doc.fillColor('#13284b').font('Times-Bold').fontSize(18).text('CERTIFICATE', x, 76, { width: cardW, align: 'center' });
-    doc.font('Times-Bold').fontSize(34).text('Of Completion', x, 104, { width: cardW, align: 'center' });
-    doc.fillColor('#536685').font('Helvetica-Oblique').fontSize(15).text('We hereby proudly announce that', x, 164, { width: cardW, align: 'center' });
-    doc.fillColor('#0d1e39').font('Times-Bold').fontSize(30).text(student.name, x, 208, { width: cardW, align: 'center', underline: true });
-    doc.fillColor('#536685').font('Helvetica').fontSize(16).text('has successfully completed the course of', x, 262, { width: cardW, align: 'center' });
-    doc.fillColor('#13284b').font('Times-Roman').fontSize(25).text(student.course_name, x, 302, { width: cardW, align: 'center' });
-    doc.fillColor('#20385f').font('Helvetica-Bold').fontSize(14).text(`Course Type: ${student.course_type}`, detailX, 396, { width: detailW, align: 'center' });
-    doc.font('Helvetica').fontSize(13).text(`Start Date: ${student.start_date}`, detailX, 426, { width: detailW, align: 'center' });
-    doc.text(`End Date: ${student.end_date}`, detailX, 452, { width: detailW, align: 'center' });
-    doc.text(`Score Achieved: ${student.score}`, detailX, 478, { width: detailW, align: 'center' });
-    doc.strokeColor('#7f93bc').lineWidth(1);
-    [[90, 230], [336, 506], [620, 760]].forEach(([a, b]) => doc.moveTo(a, h - 78).lineTo(b, h - 78).stroke());
-    doc.fillColor('#223a62').font('Helvetica-Bold').fontSize(12).text('Authorized Sign', 100, 542);
-    doc.text(`Reg. No: ${student.reg_no}`, 340, 542, { width: 170, align: 'center' });
-    doc.text('QR Verification', 620, 542, { width: 140, align: 'center' });
-    return QRCode.toBuffer(verifyUrl, { margin: 1, width: 120 }).then(qr => doc.image(qr, 646, 394, { width: 88 }));
+
+    for (const key of certificateElementsForGeneration(config)) {
+        if (key === 'qrCode') continue;
+        const box = config.layout[key];
+        if (box.kind === 'image') {
+            drawImageElement(doc, box);
+            continue;
+        }
+        if (box.kind === 'shape') {
+            drawShapeElement(doc, box);
+            continue;
+        }
+        if ((box.source || key) === 'signatory' || box.kind === 'signatory') {
+            drawSignatory(doc, box);
+            continue;
+        }
+        const text = elementText(key, student, config);
+        if (text) drawFittedText(doc, text, box);
+    }
+
+    if (config.elements.qrCode && !config.layout.qrCode.deleted) {
+        const box = scaledBox(doc, config.layout.qrCode);
+        const qrSize = Math.min(box.w, box.h);
+        const qr = await QRCode.toBuffer(verifyUrl, { margin: 1, width: Math.max(80, Math.round(qrSize)) });
+        doc.image(qr, box.x, box.y, { width: qrSize, height: qrSize });
+    }
 }
 
 // This checks login details and sends back the employee role.
@@ -651,13 +1074,131 @@ app.post('/upload-template', templateUpload.single('template'), (req, res) => {
     res.json({ success: true, template: { name: req.file.filename, source: 'uploaded', url: `/uploaded_templates/${encodeURIComponent(req.file.filename)}` } });
 });
 
+app.post('/upload-logo', (req, res) => {
+    logoUpload.single('logo')(req, res, error => {
+        if (error) return res.status(400).json({ success: false, message: error.message || 'Logo upload failed.' });
+        if (!req.file) return res.status(400).json({ success: false, message: 'Logo file is required.' });
+        res.json({ success: true, logo: { name: req.file.filename, url: `/uploaded_logos/${encodeURIComponent(req.file.filename)}` } });
+    });
+});
+
+app.get('/certificate-config', (_, res) => {
+    res.json({ success: true, config: certificateConfig, canvasSize: CANVAS_SIZE });
+});
+
+app.post('/certificate-config', (req, res) => {
+    try {
+        const saved = saveCertificateConfig(req.body || {});
+        res.json({ success: true, config: saved, canvasSize: CANVAS_SIZE });
+    } catch (error) {
+        console.error('Certificate config save failed:', error?.message || error);
+        res.status(400).json({ success: false, message: 'Certificate configuration could not be saved.' });
+    }
+});
+
+app.post('/certificate-config/reset', (_, res) => {
+    try {
+        const saved = resetCertificateConfig();
+        res.json({ success: true, config: saved, canvasSize: CANVAS_SIZE, message: 'Default layout restored.' });
+    } catch (error) {
+        console.error('Certificate config reset failed:', error?.message || error);
+        res.status(500).json({ success: false, message: 'Certificate layout could not be reset.' });
+    }
+});
+
+app.get('/certificate-presets', (_, res) => {
+    res.json({ success: true, presets: certificateConfig.presets || [] });
+});
+
+app.post('/certificate-presets', (req, res) => {
+    try {
+        const name = cleanText(req.body?.name, 'Custom Preset');
+        const id = `${name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'preset'}-${Date.now()}`;
+        const next = deepMerge(certificateConfig, {});
+        next.presets = [...(next.presets || []), { id, name, config: cloneConfigForPreset(req.body?.config || certificateConfig) }].slice(-20);
+        const saved = saveCertificateConfig(next);
+        res.json({ success: true, presets: saved.presets, preset: saved.presets.find(preset => preset.id === id) });
+    } catch (error) {
+        console.error('Preset save failed:', error?.message || error);
+        res.status(400).json({ success: false, message: 'Preset could not be saved.' });
+    }
+});
+
+app.post('/certificate-presets/:id/load', (req, res) => {
+    try {
+        const preset = (certificateConfig.presets || []).find(item => item.id === req.params.id);
+        if (!preset?.config) return res.status(404).json({ success: false, message: 'Preset does not have a saved layout yet.' });
+        const saved = saveCertificateConfig({ ...preset.config, presets: certificateConfig.presets });
+        res.json({ success: true, config: saved, canvasSize: CANVAS_SIZE });
+    } catch (error) {
+        console.error('Preset load failed:', error?.message || error);
+        res.status(400).json({ success: false, message: 'Preset could not be loaded.' });
+    }
+});
+
+app.post('/certificate-presets/:id/duplicate', (req, res) => {
+    try {
+        const preset = (certificateConfig.presets || []).find(item => item.id === req.params.id);
+        if (!preset) return res.status(404).json({ success: false, message: 'Preset not found.' });
+        const id = `${preset.id}-copy-${Date.now()}`;
+        const next = deepMerge(certificateConfig, {});
+        next.presets = [...(next.presets || []), { id, name: `${preset.name} Copy`, config: preset.config ? cloneConfigForPreset(preset.config) : null }].slice(-20);
+        const saved = saveCertificateConfig(next);
+        res.json({ success: true, presets: saved.presets });
+    } catch (error) {
+        console.error('Preset duplicate failed:', error?.message || error);
+        res.status(400).json({ success: false, message: 'Preset could not be duplicated.' });
+    }
+});
+
+app.delete('/certificate-presets/:id', (req, res) => {
+    try {
+        const next = deepMerge(certificateConfig, {});
+        next.presets = (next.presets || []).filter(item => item.id !== req.params.id);
+        const saved = saveCertificateConfig(next);
+        res.json({ success: true, presets: saved.presets });
+    } catch (error) {
+        console.error('Preset delete failed:', error?.message || error);
+        res.status(400).json({ success: false, message: 'Preset could not be deleted.' });
+    }
+});
+
+app.get('/sample-excel', (_, res) => {
+    const worksheet = xlsx.utils.json_to_sheet([{
+        Name: 'Lalith Kartheek',
+        Registration_Number: 'REG-001',
+        roll_number: '22A91A0501',
+        he_she: 'He',
+        Course_Name: 'Data Structures and Algorithms',
+        Course_Type: 'Online',
+        Start_Date: '2026-01-01',
+        End_Date: '2026-03-31',
+        Score: 86,
+        Email: 'student@example.com'
+    }], { header: ['Name', 'Registration_Number', 'roll_number', 'he_she', 'Course_Name', 'Course_Type', 'Start_Date', 'End_Date', 'Score', 'Email'] });
+    const workbook = xlsx.utils.book_new();
+    xlsx.utils.book_append_sheet(workbook, worksheet, 'Participants');
+    const buffer = xlsx.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename="CertiGen_Sample_Participants.xlsx"');
+    res.send(buffer);
+});
+
 // This uploads the Excel file, reads the first sheet, and keeps valid rows.
 app.post('/upload-excel', excelUpload.single('file'), (req, res) => {
     try {
         if (!req.file) return res.status(400).json({ success: false, message: 'Excel file is required' });
         const workbook = xlsx.readFile(req.file.path, { cellDates: true });
         const sheet = workbook.Sheets[workbook.SheetNames[0]];
-        const mapped = mapStudents(xlsx.utils.sheet_to_json(sheet, { defval: '' }));
+        const rows = xlsx.utils.sheet_to_json(sheet, { defval: '' });
+        const missingColumns = missingExcelColumns(rows);
+        if (missingColumns.length) {
+            return res.status(400).json({
+                success: false,
+                message: `Missing required Excel column${missingColumns.length > 1 ? 's' : ''}: ${missingColumns.join(', ')}. Download the latest sample Excel file and upload again.`
+            });
+        }
+        const mapped = mapStudents(rows);
         uploadedStudents = mapped.students;
         uploadSummary = mapped.summary;
         res.json({ success: true, total: uploadSummary.totalRows, valid: uploadSummary.validRows, invalid: uploadSummary.invalidRows, courseNames: uploadSummary.courseNames });
@@ -673,6 +1214,41 @@ app.post('/upload-excel', excelUpload.single('file'), (req, res) => {
 app.post('/generate', async (req, res) => {
     try {
         if (!uploadedStudents.length) return res.status(400).json({ success: false, message: 'Upload a valid Excel sheet first' });
+        const activeConfig = req.body?.config ? saveCertificateConfig(req.body.config) : certificateConfig;
+        const eligibleStudents = [];
+        const ineligibleParticipants = [];
+
+        uploadedStudents.forEach((student, index) => {
+            if (isScoreEligible(student, activeConfig)) {
+                eligibleStudents.push(student);
+            } else {
+                ineligibleParticipants.push({
+                    rowNumber: index + 2,
+                    name: student.name || 'No name',
+                    reg_no: student.reg_no || 'No registration number',
+                    roll_number: student.roll_number || 'No roll number',
+                    he_she: student.he_she || 'No he/she value',
+                    course_name: student.course_name || 'No course',
+                    email: student.email || 'No email',
+                    score: student.score || 'No score',
+                    passing_marks: String(activeConfig.minimumQualifyingScore),
+                    total_marks: student.total_marks || '',
+                    course_type: student.course_type || 'No course type',
+                    reason: eligibilityReason(student, activeConfig)
+                });
+            }
+        });
+
+        if (!eligibleStudents.length) {
+            return res.status(400).json({
+                success: false,
+                message: 'No participants met the current certificate eligibility settings.',
+                eligibleCount: 0,
+                ineligibleCount: ineligibleParticipants.length,
+                generatedCount: 0
+            });
+        }
+
         const zipName = `certificates_${Date.now()}.zip`;
         const zipPath = path.join(DIRS.certificates, zipName);
         const batchDir = path.join(DIRS.certificates, `batch_${Date.now()}`);
@@ -681,7 +1257,7 @@ app.post('/generate', async (req, res) => {
         fs.mkdirSync(batchDir, { recursive: true });
         archive.pipe(output);
 
-        for (const student of uploadedStudents) {
+        for (const student of eligibleStudents) {
             await upsertCertificate(student);
 
             const pdfName = `${safeName(student.name)}_${safeName(student.reg_no)}.pdf`;
@@ -693,7 +1269,7 @@ app.post('/generate', async (req, res) => {
                 pdfStream.on('finish', resolve);
                 pdfStream.on('error', reject);
                 doc.on('error', reject);
-                drawCertificate(doc, student, `${baseUrl(req)}/verify/${encodeURIComponent(student.reg_no)}`).then(() => doc.end()).catch(reject);
+                drawCertificate(doc, student, `${baseUrl(req)}/verify/${encodeURIComponent(student.reg_no)}`, activeConfig).then(() => doc.end()).catch(reject);
             });
             archive.file(pdfPath, { name: pdfName });
         }
@@ -705,21 +1281,25 @@ app.post('/generate', async (req, res) => {
             zipName,
             zipUrl: `/download-zip/${encodeURIComponent(zipName)}`,
             createdAt: new Date().toISOString(),
-            generatedCount: uploadedStudents.length,
-            failedCount: uploadSummary.invalidRows
+            generatedCount: eligibleStudents.length,
+            eligibleCount: eligibleStudents.length,
+            ineligibleCount: ineligibleParticipants.length,
+            failedCount: uploadSummary.invalidRows + ineligibleParticipants.length
         };
         const emailStatus = await sendGenerationMail({
             employeeEmail: req.body.employeeEmail,
             zipName,
             zipPath,
             zipUrl: `${baseUrl(req)}${lastGeneration.zipUrl}`,
-            generatedCount: uploadedStudents.length,
-            invalidParticipants: uploadSummary.invalidParticipants
+            generatedCount: eligibleStudents.length,
+            invalidParticipants: [...uploadSummary.invalidParticipants, ...ineligibleParticipants]
         });
         res.json({
             success: true,
-            generatedCount: uploadedStudents.length,
-            failedCount: uploadSummary.invalidRows,
+            eligibleCount: eligibleStudents.length,
+            ineligibleCount: ineligibleParticipants.length,
+            generatedCount: eligibleStudents.length,
+            failedCount: uploadSummary.invalidRows + ineligibleParticipants.length,
             zipUrl: lastGeneration.zipUrl,
             emailSent: Boolean(emailStatus?.sent),
             emailMessage: emailStatus?.reason || 'Email status unavailable.'
@@ -770,6 +1350,7 @@ app.get('/stats', async (_, res) => {
             courseNames: courses,
             currentUpload: uploadSummary,
             selectedTemplate,
+            certificateConfig,
             latestGeneration: lastGeneration
         });
     } catch {

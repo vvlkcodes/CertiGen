@@ -11,24 +11,26 @@
         <aside class="sidebar">
             <div class="brand">
                 <h1>CertiGen</h1>
-                <p>Manage certificate uploads, templates, generation, downloads, and verification from one workspace.</p>
+                <p>Build, preview, generate, and verify certificates from one professional workspace.</p>
             </div>
-
             <nav class="nav">
                 <button type="button" class="nav-btn active" data-view="dashboard">Dashboard</button>
-                <button type="button" class="nav-btn" data-view="upload">Upload Excel</button>
-                <button type="button" class="nav-btn" data-view="templates">Templates</button>
-                <button type="button" class="nav-btn" data-view="generate">Generate Certificates</button>
+                <button type="button" class="nav-btn" data-view="templates">1. Template</button>
+                <button type="button" class="nav-btn" data-view="configure">2. Elements</button>
+                <button type="button" class="nav-btn" data-view="paragraph">3. Text</button>
+                <button type="button" class="nav-btn" data-view="designer">4. Designer</button>
+                <button type="button" class="nav-btn" data-view="upload">5. Excel</button>
+                <button type="button" class="nav-btn" data-view="preview">6. Preview</button>
+                <button type="button" class="nav-btn" data-view="generate">7. Generate</button>
             </nav>
-
             <button type="button" class="logout" id="logoutBtn">Logout</button>
         </aside>
 
         <main class="main">
             <div class="topbar">
                 <div class="headline">
-                    <h2>Employee Dashboard</h2>
-                    <p>Track previous certificate batches, upload candidate sheets, choose a template, and generate verified certificates.</p>
+                    <h2>Certificate Builder</h2>
+                    <p>Configure certificate content, design the layout, save reusable presets, and generate verified PDFs.</p>
                 </div>
                 <div class="employee-chip" id="employeeChip">Not logged in</div>
             </div>
@@ -38,21 +40,18 @@
                     <article class="card stat">
                         <h3>Total Certificates Generated</h3>
                         <div class="value" id="totalCertificates">0</div>
-                        <div class="meta">All generated certificates stored in database records.</div>
+                        <div class="meta">Stored certificate records available for QR verification.</div>
                     </article>
-
                     <article class="card stat">
-                        <h3>Certificates Not Created</h3>
+                        <h3>Rows Not Created</h3>
                         <div class="value" id="notCreated">0</div>
-                        <div class="meta">Rows skipped because required Excel details were missing.</div>
+                        <div class="meta">Invalid or ineligible rows from the latest workflow.</div>
                     </article>
-
                     <article class="card stat">
-                        <h3>Course Types Until Now</h3>
+                        <h3>Course Types</h3>
                         <div class="value" id="courseTypeCount">0</div>
-                        <div class="meta">Distinct course type groups from generated certificates.</div>
+                        <div class="meta">Distinct generated certificate course types.</div>
                     </article>
-
                     <article class="card chart-card">
                         <h3>Certificate Distribution By Course Type</h3>
                         <div class="chart-wrap">
@@ -60,36 +59,210 @@
                             <div class="legend" id="courseTypeLegend"></div>
                         </div>
                     </article>
-
                     <article class="card chart-card">
                         <h3>Top Courses</h3>
                         <div class="bar-list" id="courseBars"></div>
                     </article>
-
                     <article class="card wide">
                         <h3>Current Upload Snapshot</h3>
                         <div class="split">
                             <div>
-                                <p class="mini"><strong>Total uploaded rows:</strong> <span id="uploadTotal">0</span></p>
-                                <p class="mini"><strong>Valid rows:</strong> <span id="uploadValid">0</span></p>
+                                <p class="mini"><strong>Total participants:</strong> <span id="uploadTotal">0</span></p>
+                                <p class="mini"><strong>Usable participants:</strong> <span id="uploadValid">0</span></p>
                                 <p class="mini"><strong>Invalid rows:</strong> <span id="uploadInvalid">0</span></p>
                                 <p class="mini"><strong>Selected template:</strong> <span id="selectedTemplateName">template1.jpg</span></p>
                             </div>
                             <div>
-                                <p class="mini"><strong>Course names in latest upload:</strong></p>
+                                <p class="mini"><strong>Courses in latest upload:</strong></p>
                                 <div id="uploadCourseNames" class="hint">No uploaded sheet yet.</div>
                             </div>
                         </div>
                     </article>
-
                     <article class="card wide">
                         <h3>Participants Whose Certificates Were Not Created</h3>
-                        <p class="hint">This list helps you quickly identify the skipped students from the latest uploaded sheet.</p>
                         <div id="invalidParticipantsList" class="reject-list">
                             <div class="empty">No skipped participants in the latest upload.</div>
                         </div>
                     </article>
+                </div>
+            </section>
 
+            <section id="templates" class="view">
+                <div class="grid">
+                    <article class="card wide">
+                        <h3>Choose Or Upload Template</h3>
+                        <p class="hint">Select a built-in certificate image or upload your own background. The designer works with both.</p>
+                        <div id="templateList" class="template-grid"></div>
+                    </article>
+                    <article class="card wide form-card">
+                        <div>
+                            <h3>Upload Custom Background</h3>
+                            <p class="hint">PNG and JPG files are supported.</p>
+                        </div>
+                        <input type="file" id="templateFile" accept=".png,.jpg,.jpeg">
+                        <button type="button" class="secondary" id="uploadTemplateBtn">Upload Custom Template</button>
+                        <div id="templateStatus" class="status info">Template tools are ready.</div>
+                    </article>
+                </div>
+            </section>
+
+            <section id="configure" class="view">
+                <div class="grid">
+                    <article class="card wide form-card">
+                        <div>
+                            <h3>Certificate Element Configuration</h3>
+                            <p class="hint">Mandatory elements are always enabled unless removed inside the designer. Optional elements can be toggled for each batch.</p>
+                        </div>
+                        <div class="split">
+                            <div class="form-row">
+                                <label>Institution Name / Issuing Authority</label>
+                                <input type="text" id="institutionName" placeholder="Institution name">
+                            </div>
+                            <div class="form-row">
+                                <label>Certificate Title</label>
+                                <input type="text" id="certificateTitle" placeholder="Certificate title">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <label>Intro Text</label>
+                            <input type="text" id="introText" placeholder="Introductory line">
+                        </div>
+                        <div class="toggle-grid" id="elementToggles"></div>
+                        <div class="qualifying-panel" id="scoreThresholdPanel">
+                            <label>Minimum Qualifying Score</label>
+                            <input type="number" id="minimumQualifyingScore" min="0" step="1">
+                            <p class="hint">When Score Achieved is enabled, only participants at or above this score are generated.</p>
+                        </div>
+                        <button type="button" class="primary" id="saveConfigBtn">Save Configuration</button>
+                        <div id="configStatus" class="status info">Configuration loaded.</div>
+                    </article>
+                </div>
+            </section>
+
+            <section id="paragraph" class="view">
+                <div class="grid">
+                    <article class="card wide paragraph-grid">
+                        <div class="form-card">
+                            <div>
+                                <h3>Custom Certificate Paragraph</h3>
+                                <p class="hint">Use placeholders to dynamically fill participant and course information.</p>
+                            </div>
+                            <textarea id="paragraphTemplate" rows="8"></textarea>
+                            <button type="button" class="primary" id="saveParagraphBtn">Save Paragraph</button>
+                            <div id="paragraphStatus" class="status info">Paragraph editor is ready.</div>
+                        </div>
+                        <div>
+                            <h3>Placeholder Helper</h3>
+                            <div class="placeholder-list" id="placeholderList"></div>
+                        </div>
+                    </article>
+                </div>
+            </section>
+
+            <section id="designer" class="view">
+                <div class="designer-shell">
+                    <aside class="card designer-panel">
+                        <h3>Object Tools</h3>
+                        <label>Selected Element</label>
+                        <select id="selectedElement"></select>
+
+                        <div class="tool-row">
+                            <button type="button" class="secondary" id="duplicateElementBtn">Duplicate</button>
+                            <button type="button" class="secondary danger-soft" id="deleteElementBtn">Delete</button>
+                        </div>
+                        <div class="tool-row">
+                            <button type="button" class="secondary" id="undoBtn">Undo</button>
+                            <button type="button" class="secondary" id="lockElementBtn">Lock</button>
+                        </div>
+                        <div class="tool-row">
+                            <button type="button" class="secondary" id="bringForwardBtn">Bring Forward</button>
+                            <button type="button" class="secondary" id="sendBackwardBtn">Send Backward</button>
+                        </div>
+                        <div class="tool-row">
+                            <button type="button" class="secondary" id="setupSignatoriesBtn">Set Signatories</button>
+                            <button type="button" class="secondary" id="addSignatoryBtn">Add Signatory</button>
+                        </div>
+                        <div class="tool-row">
+                            <button type="button" class="secondary" id="addLogoBtn">Add Logo</button>
+                            <button type="button" class="secondary" id="addTextBtn">Add Text</button>
+                        </div>
+                        <button type="button" class="secondary" id="addShapeBtn">Add Shape</button>
+
+                        <h3>Text Style</h3>
+                        <div class="form-row hidden" id="elementTextPanel">
+                            <label>Element Text / Signatory Name</label>
+                            <input type="text" id="elementTextControl" placeholder="Element text">
+                        </div>
+                        <label>Font Family</label>
+                        <select id="fontFamilyControl"></select>
+                        <label>Font Size</label>
+                        <input type="number" id="fontSizeControl" min="8" max="96">
+                        <label>Font Weight</label>
+                        <select id="fontWeightControl">
+                            <option value="normal">Normal</option>
+                            <option value="bold">Bold</option>
+                        </select>
+                        <div class="toggle-grid compact">
+                            <label class="toggle-card"><input type="checkbox" id="italicControl"> <span>Italic</span></label>
+                            <label class="toggle-card"><input type="checkbox" id="underlineControl"> <span>Underline</span></label>
+                        </div>
+                        <label>Text Color</label>
+                        <input type="color" id="textColorControl">
+                        <label>Alignment</label>
+                        <select id="alignControl">
+                            <option value="left">Left</option>
+                            <option value="center">Center</option>
+                            <option value="right">Right</option>
+                            <option value="justify">Justify</option>
+                        </select>
+                        <label>Letter Spacing</label>
+                        <input type="number" id="letterSpacingControl" min="-5" max="30" step="0.5">
+                        <label>Opacity</label>
+                        <input type="range" id="opacityControl" min="0" max="1" step="0.05">
+                        <label>Rotation</label>
+                        <input type="number" id="rotationControl" min="-360" max="360" step="1">
+
+                        <div class="form-row hidden" id="logoPanel">
+                            <label>Replace Logo</label>
+                            <input type="file" id="logoFile" accept=".png,.jpg,.jpeg">
+                            <button type="button" class="secondary" id="uploadLogoBtn">Upload / Replace Logo</button>
+                        </div>
+
+                        <h3>Presets</h3>
+                        <label>Layout Preset</label>
+                        <select id="presetSelect"></select>
+                        <input type="text" id="presetName" placeholder="Preset name">
+                        <div class="tool-row">
+                            <button type="button" class="secondary" id="savePresetBtn">Save Preset</button>
+                            <button type="button" class="secondary" id="loadPresetBtn">Load</button>
+                        </div>
+                        <div class="tool-row">
+                            <button type="button" class="secondary" id="duplicatePresetBtn">Duplicate</button>
+                            <button type="button" class="secondary danger-soft" id="deletePresetBtn">Delete</button>
+                        </div>
+                    </aside>
+
+                    <article class="card designer-workspace-card">
+                        <div class="designer-toolbar">
+                            <div>
+                                <h3>Certificate Designer</h3>
+                                <p class="hint">Drag objects, use corner handles to resize, or right-click an object for quick actions.</p>
+                            </div>
+                            <div class="toolbar-actions">
+                                <button type="button" class="secondary" id="zoomOutBtn">Zoom Out</button>
+                                <span class="zoom-chip" id="zoomValue">100%</span>
+                                <button type="button" class="secondary" id="zoomInBtn">Zoom In</button>
+                                <button type="button" class="secondary" id="resetLayoutBtn">Reset Layout</button>
+                                <button type="button" class="primary" id="saveLayoutBtn">Save Layout</button>
+                            </div>
+                        </div>
+                        <div class="designer-scroll" id="designerScroll">
+                            <div class="canvas-scale" id="designerScale">
+                                <div class="certificate-canvas grid-on" id="certificateCanvas"></div>
+                            </div>
+                        </div>
+                        <div id="layoutStatus" class="status info">Designer ready.</div>
+                    </article>
                 </div>
             </section>
 
@@ -97,34 +270,32 @@
                 <div class="grid">
                     <article class="card wide form-card">
                         <div>
-                            <h3>Upload Excel Sheet</h3>
-                            <p class="hint">The sheet should include candidate name, registration number, course name, start date, end date, score, email, and course type. You may also add optional <strong>passing_marks</strong> and <strong>total_marks</strong> columns — when present, each row's own passing mark is used to decide eligibility instead of the default threshold.</p>
+                            <h3>Upload Participant Excel</h3>
+                            <p class="hint">Download the sample workbook before uploading participant data. Required columns include roll_number and he_she.</p>
                         </div>
-
+                        <button type="button" class="secondary" id="downloadSampleBtn">Download Sample Excel</button>
                         <input type="file" id="excelFile" accept=".xlsx,.xls,.csv">
                         <button type="button" class="primary" id="uploadBtn">Upload Excel Sheet</button>
                         <div id="uploadStatus" class="status info">No file uploaded yet.</div>
                     </article>
-
                 </div>
             </section>
 
-            <section id="templates" class="view">
+            <section id="preview" class="view">
                 <div class="grid">
                     <article class="card wide">
-                        <h3>Choose A Certificate Template</h3>
-                        <p class="hint">All 10 existing templates are shown here. Click any preview to select it for the certificate.</p>
-                        <div id="templateList" class="template-grid"></div>
-                    </article>
-
-                    <article class="card wide form-card">
-                        <div>
-                            <h3>Select Your Own Template</h3>
-                            <p class="hint">Upload a custom image template if you want to use your own certificate design.</p>
+                        <div class="designer-toolbar">
+                            <div>
+                                <h3>Live Preview</h3>
+                                <p class="hint">This uses the exact same layout data sent to PDF generation.</p>
+                            </div>
+                            <button type="button" class="secondary" id="previewSampleLongNameBtn">Preview Long Name</button>
                         </div>
-                        <input type="file" id="templateFile" accept=".png,.jpg,.jpeg">
-                        <button type="button" class="secondary" id="uploadTemplateBtn">Upload Custom Template</button>
-                        <div id="templateStatus" class="status info">Built-in templates are ready to use.</div>
+                        <div class="designer-scroll">
+                            <div class="canvas-scale preview-scale">
+                                <div class="certificate-canvas preview-only" id="previewCanvas"></div>
+                            </div>
+                        </div>
                     </article>
                 </div>
             </section>
@@ -134,36 +305,26 @@
                     <article class="card wide generate-grid">
                         <div>
                             <h3>Generate Individual Certificates</h3>
-                            <p class="hint">Each valid row will create one PDF certificate. PDFs will be zipped, and the QR code will point to the verification page.</p>
+                            <p class="hint">Certificates are generated for eligible participants, zipped, and linked to verification records.</p>
                         </div>
-
                         <div class="split">
                             <div class="card flat-card">
-                                <h4>Certificate Content</h4>
-                                <div class="mini">
-                                    Certificate Of Completion<br>
-                                    We hereby proudly announce that PARTICIPANT_NAME / STUDENT_NAME<br>
-                                    has successfully completed the course of COURSE_NAME<br>
-                                    Course Type: online/offline<br>
-                                    Start Date<br>
-                                    End Date<br>
-                                    Score Achieved<br>
-                                    Authorized sign<br>
-                                    Reg. no of student<br>
-                                    QR Verification
-                                </div>
+                                <h4>Eligibility Summary</h4>
+                                <p class="mini"><strong>Total participants:</strong> <span id="generateTotalCount">0</span></p>
+                                <p class="mini"><strong>Eligible participants:</strong> <span id="eligiblePreviewCount">0</span></p>
+                                <p class="mini"><strong>Ineligible participants:</strong> <span id="ineligiblePreviewCount">0</span></p>
+                                <p class="mini"><strong>Invalid upload rows:</strong> <span id="skipCount">0</span></p>
+                                <p class="mini"><strong>Minimum qualifying score:</strong> <span id="qualifyingScoreText">Not applied</span></p>
                             </div>
                             <div class="card flat-card">
-                                <h4>Generation Summary</h4>
-                                <p class="mini"><strong>Valid rows ready:</strong> <span id="readyCount">0</span></p>
-                                <p class="mini"><strong>Rows skipped:</strong> <span id="skipCount">0</span></p>
+                                <h4>Generation Settings</h4>
                                 <p class="mini"><strong>Selected template:</strong> <span id="generateTemplateName">template1.jpg</span></p>
-                                <p class="mini"><strong>Admin notification:</strong> Email will be attempted after successful generation.</p>
+                                <p class="mini"><strong>QR verification:</strong> <span id="qrSettingText">Enabled</span></p>
+                                <p class="mini"><strong>Certificates generated:</strong> <span id="generatedCountText">0</span></p>
                             </div>
                         </div>
-
                         <button type="button" class="primary" id="generateBtn">Generate Certificates</button>
-                        <div id="generateStatus" class="status info">Upload an Excel sheet and choose a template before generating.</div>
+                        <div id="generateStatus" class="status info">Upload Excel data and save the layout before generating.</div>
                         <button type="button" id="downloadZipBtn" class="primary hidden">Download ZIP File</button>
                     </article>
                 </div>
@@ -171,61 +332,144 @@
         </main>
     </div>
 
+    <div class="context-menu hidden" id="elementContextMenu">
+        <button type="button" data-action="duplicate">Duplicate</button>
+        <button type="button" data-action="delete">Delete</button>
+        <button type="button" data-action="lock">Lock / Unlock</button>
+        <button type="button" data-action="front">Bring Forward</button>
+        <button type="button" data-action="back">Send Backward</button>
+    </div>
+
     <script>
         const localHostnames = ["localhost", "127.0.0.1", "0.0.0.0"];
         const isLocalStaticServer = localHostnames.includes(window.location.hostname) && window.location.port && window.location.port !== "3000";
         const API_BASE = window.location.protocol === "file:" || isLocalStaticServer ? "http://localhost:3000" : "";
-        const palette = ["#2357ff", "#5db2ff", "#14a77d", "#ff8d57", "#7349ff", "#ff5b7f", "#f0b429", "#13c2c2"];
         const employeeEmail = localStorage.getItem("employeeEmail");
+        const palette = ["#2357ff", "#5db2ff", "#14a77d", "#ff8d57", "#7349ff", "#ff5b7f", "#f0b429", "#13c2c2"];
+        const placeholders = ["{name}", "{roll_number}", "{course_name}", "{he_she}", "{course_type}", "{start_date}", "{end_date}", "{score}", "{registration_number}", "{institution_name}"];
+        const fontFamilies = ["Times New Roman", "Georgia", "Garamond", "Arial", "Helvetica", "Verdana", "Open Sans", "Roboto", "Inter", "Playfair Display", "Cinzel", "Merriweather", "Poppins", "Montserrat", "Courier"];
+        const optionalToggleKeys = ["qrCode", "registrationNumber", "rollNumber", "heShe", "courseType", "startDate", "endDate", "score", "logo"];
+        const elementLabels = {
+            institutionName: "Institution Name",
+            certificateTitle: "Certificate Title",
+            introText: "Intro Text",
+            studentName: "Student Name",
+            rollNumber: "Roll Number",
+            heShe: "He / She",
+            customParagraph: "Custom Paragraph",
+            courseName: "Course Name",
+            courseType: "Course Type",
+            registrationNumber: "Registration Number",
+            startDate: "Start Date",
+            endDate: "End Date",
+            score: "Score Achieved",
+            signatory: "Signatory",
+            signatory1: "Signatory",
+            logo: "Logo",
+            qrCode: "QR Code",
+            qrLabel: "QR Verification Label"
+        };
+        const sampleStudent = {
+            NAME: "Lalith Kartheek",
+            name: "Lalith Kartheek",
+            COURSE_NAME: "Data Structures and Algorithms",
+            course_name: "Data Structures and Algorithms",
+            COURSE_TYPE: "Online",
+            course_type: "Online",
+            START_DATE: "2026-01-01",
+            start_date: "2026-01-01",
+            END_DATE: "2026-03-31",
+            end_date: "2026-03-31",
+            SCORE: "86",
+            score: "86",
+            REGISTRATION_NUMBER: "REG-001",
+            registration_number: "REG-001",
+            ROLL_NUMBER: "22A91A0501",
+            roll_number: "22A91A0501",
+            HE_SHE: "He",
+            he_she: "He",
+            INSTITUTION_NAME: "CertiGen College",
+            institution_name: "CertiGen College"
+        };
 
-        // This keeps logged-out users away from the dashboard.
-        if (!employeeEmail) {
-            window.location.href = "index.html";
-        }
-
+        if (!employeeEmail) window.location.href = "index.html";
         document.getElementById("employeeChip").textContent = employeeEmail || "Not logged in";
 
         const state = {
             stats: null,
             templates: [],
-            activeView: localStorage.getItem("employeeActiveView") || "dashboard"
+            config: null,
+            canvasSize: { width: 1000, height: 707 },
+            selectedElement: "studentName",
+            activeView: localStorage.getItem("employeeActiveView") || "dashboard",
+            selectedTemplateUrl: "",
+            zoom: 1,
+            drag: null,
+            undoStack: [],
+            lastGeneratedCount: 0
         };
 
-        // Sidebar buttons: switch between dashboard sections.
-        document.querySelectorAll(".nav-btn").forEach(button => {
-            button.addEventListener("click", event => {
-                event.preventDefault();
-                showView(button.dataset.view);
+        bindChrome();
+        seedFontControls();
+
+        function bindChrome() {
+            document.querySelectorAll(".nav-btn").forEach(button => button.addEventListener("click", () => showView(button.dataset.view)));
+            document.getElementById("logoutBtn").addEventListener("click", logout);
+            document.getElementById("uploadBtn").addEventListener("click", uploadExcel);
+            document.getElementById("uploadTemplateBtn").addEventListener("click", uploadTemplate);
+            document.getElementById("generateBtn").addEventListener("click", generateCertificates);
+            document.getElementById("downloadZipBtn").addEventListener("click", downloadZipFile);
+            document.getElementById("saveConfigBtn").addEventListener("click", saveConfig);
+            document.getElementById("saveParagraphBtn").addEventListener("click", saveConfig);
+            document.getElementById("saveLayoutBtn").addEventListener("click", saveConfig);
+            document.getElementById("downloadSampleBtn").addEventListener("click", downloadSampleExcel);
+            document.getElementById("previewSampleLongNameBtn").addEventListener("click", () => renderPreview("Christopher Alexander Williams"));
+            document.getElementById("zoomInBtn").addEventListener("click", () => setZoom(state.zoom + 0.1));
+            document.getElementById("zoomOutBtn").addEventListener("click", () => setZoom(state.zoom - 0.1));
+            document.getElementById("resetLayoutBtn").addEventListener("click", resetLayout);
+            document.getElementById("deleteElementBtn").addEventListener("click", deleteSelectedElement);
+            document.getElementById("duplicateElementBtn").addEventListener("click", duplicateSelectedElement);
+            document.getElementById("lockElementBtn").addEventListener("click", toggleSelectedLock);
+            document.getElementById("bringForwardBtn").addEventListener("click", () => moveLayer(1));
+            document.getElementById("sendBackwardBtn").addEventListener("click", () => moveLayer(-1));
+            document.getElementById("setupSignatoriesBtn").addEventListener("click", setupSignatories);
+            document.getElementById("addSignatoryBtn").addEventListener("click", () => addSignatory());
+            document.getElementById("addLogoBtn").addEventListener("click", addLogoElement);
+            document.getElementById("addTextBtn").addEventListener("click", addTextElement);
+            document.getElementById("addShapeBtn").addEventListener("click", addShapeElement);
+            document.getElementById("uploadLogoBtn").addEventListener("click", uploadLogo);
+            document.getElementById("undoBtn").addEventListener("click", undoLastAction);
+            document.getElementById("savePresetBtn").addEventListener("click", savePreset);
+            document.getElementById("loadPresetBtn").addEventListener("click", loadPreset);
+            document.getElementById("duplicatePresetBtn").addEventListener("click", duplicatePreset);
+            document.getElementById("deletePresetBtn").addEventListener("click", deletePreset);
+            document.getElementById("selectedElement").addEventListener("change", event => selectElement(event.target.value));
+            document.getElementById("elementContextMenu").addEventListener("click", handleContextMenuAction);
+            document.addEventListener("click", hideContextMenu);
+            document.addEventListener("keydown", handleKeyboard);
+
+            ["fontSizeControl", "fontFamilyControl", "fontWeightControl", "italicControl", "underlineControl", "textColorControl", "alignControl", "letterSpacingControl", "opacityControl", "rotationControl", "elementTextControl"].forEach(id => {
+                document.getElementById(id).addEventListener("input", updateSelectedStyle);
+                document.getElementById(id).addEventListener("change", updateSelectedStyle);
             });
-        });
+            ["institutionName", "certificateTitle", "introText", "minimumQualifyingScore"].forEach(id => {
+                document.getElementById(id).addEventListener("input", () => {
+                    collectConfigFromForm();
+                    renderAll();
+                    updateGenerateSummary();
+                });
+            });
+            document.getElementById("paragraphTemplate").addEventListener("input", () => {
+                state.config.paragraphTemplate = document.getElementById("paragraphTemplate").value;
+                renderAll();
+            });
+        }
 
-        // Logout button: clear saved login data.
-        document.getElementById("logoutBtn").addEventListener("click", event => {
-            event.preventDefault();
-            logout();
-        });
-        // Upload button: send the Excel sheet to the server.
-        document.getElementById("uploadBtn").addEventListener("click", event => {
-            event.preventDefault();
-            uploadExcel();
-        });
-        // Upload template button: send a custom template image.
-        document.getElementById("uploadTemplateBtn").addEventListener("click", event => {
-            event.preventDefault();
-            uploadTemplate();
-        });
-        // Generate button: create all certificates and ZIP them.
-        document.getElementById("generateBtn").addEventListener("click", event => {
-            event.preventDefault();
-            generateCertificates();
-        });
-        // Download button: download the ZIP file from the server.
-        document.getElementById("downloadZipBtn").addEventListener("click", event => {
-            event.preventDefault();
-            downloadZipFile();
-        });
+        function seedFontControls() {
+            const select = document.getElementById("fontFamilyControl");
+            select.innerHTML = fontFamilies.map(font => `<option value="${font}">${font}</option>`).join("");
+        }
 
-        // This shows one section and hides the others.
         function showView(viewId) {
             state.activeView = viewId;
             localStorage.setItem("employeeActiveView", viewId);
@@ -233,9 +477,9 @@
             document.querySelectorAll(".nav-btn").forEach(button => button.classList.remove("active"));
             document.getElementById(viewId).classList.add("active");
             document.querySelector(`.nav-btn[data-view="${viewId}"]`).classList.add("active");
+            renderAll();
         }
 
-        // This logs the employee out and clears saved page state.
         function logout() {
             localStorage.removeItem("employeeEmail");
             localStorage.removeItem("employeeRole");
@@ -243,133 +487,805 @@
             window.location.href = "index.html";
         }
 
-        // This updates status boxes like upload, template, and generate messages.
         function setStatus(id, type, message) {
             const element = document.getElementById(id);
+            if (!element) return;
             element.className = `status ${type}`;
             element.textContent = message;
         }
 
-        // This keeps uploaded student text safe before adding it to the page.
         function escapeHtml(value) {
-            return String(value ?? "")
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#39;");
+            return String(value ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
         }
 
-        // This draws the text legend used beside the pie chart.
-        function renderLegend(items, containerId) {
-            const container = document.getElementById(containerId);
-            container.innerHTML = "";
+        function clone(value) {
+            return JSON.parse(JSON.stringify(value));
+        }
 
-            if (!items.length) {
-                container.innerHTML = `<div class="empty">No chart data available yet.</div>`;
+        function pushUndo() {
+            if (!state.config) return;
+            state.undoStack.push(clone(state.config));
+            if (state.undoStack.length > 25) state.undoStack.shift();
+        }
+
+        function undoLastAction() {
+            const previous = state.undoStack.pop();
+            if (!previous) {
+                setStatus("layoutStatus", "error", "Nothing to undo.");
                 return;
             }
+            state.config = previous;
+            hydrateConfigForm();
+            renderAll();
+            setStatus("layoutStatus", "success", "Undo applied.");
+        }
 
-            items.forEach((item, index) => {
-                const row = document.createElement("div");
-                row.className = "legend-item";
-                row.innerHTML = `
-                    <div><span class="swatch"></span>${item.label}</div>
-                    <strong>${item.value}</strong>
-                `;
-                row.querySelector(".swatch").style.background = palette[index % palette.length];
+        function showContextMenu(event, key) {
+            event.preventDefault();
+            selectElement(key);
+            const menu = document.getElementById("elementContextMenu");
+            menu.style.left = `${event.clientX}px`;
+            menu.style.top = `${event.clientY}px`;
+            menu.classList.remove("hidden");
+        }
+
+        function hideContextMenu() {
+            document.getElementById("elementContextMenu").classList.add("hidden");
+        }
+
+        function handleContextMenuAction(event) {
+            const action = event.target.dataset.action;
+            if (!action) return;
+            event.stopPropagation();
+            if (action === "duplicate") duplicateSelectedElement();
+            if (action === "delete") deleteSelectedElement();
+            if (action === "lock") toggleSelectedLock();
+            if (action === "front") moveLayer(1);
+            if (action === "back") moveLayer(-1);
+            hideContextMenu();
+        }
+
+        function handleKeyboard(event) {
+            const editable = ["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement?.tagName);
+            if (editable) return;
+            if (event.key === "Delete" || event.key === "Backspace") {
+                event.preventDefault();
+                deleteSelectedElement();
+            }
+            if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "z") {
+                event.preventDefault();
+                undoLastAction();
+            }
+            if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "d") {
+                event.preventDefault();
+                duplicateSelectedElement();
+            }
+        }
+
+        function hydrateConfigForm() {
+            document.getElementById("institutionName").value = state.config.institutionName || "";
+            document.getElementById("certificateTitle").value = state.config.certificateTitle || "";
+            document.getElementById("introText").value = state.config.introText || "";
+            document.getElementById("minimumQualifyingScore").value = state.config.minimumQualifyingScore || 0;
+            document.getElementById("paragraphTemplate").value = state.config.paragraphTemplate || "";
+            renderPlaceholderHelper();
+            renderElementToggles();
+            renderElementSelect();
+            renderPresetSelect();
+            syncControlsFromSelected();
+            updateScorePanel();
+            updateGenerateSummary();
+        }
+
+        function collectConfigFromForm() {
+            if (!state.config) return null;
+            state.config.institutionName = document.getElementById("institutionName").value.trim();
+            state.config.certificateTitle = document.getElementById("certificateTitle").value.trim();
+            state.config.introText = document.getElementById("introText").value.trim();
+            state.config.minimumQualifyingScore = Number(document.getElementById("minimumQualifyingScore").value) || 0;
+            state.config.paragraphTemplate = document.getElementById("paragraphTemplate").value.trim();
+            state.config.elements.qrLabel = Boolean(state.config.elements.qrCode);
+            return state.config;
+        }
+
+        function renderElementToggles() {
+            const container = document.getElementById("elementToggles");
+            container.innerHTML = "";
+            optionalToggleKeys.forEach(key => {
+                const row = document.createElement("label");
+                row.className = "toggle-card";
+                row.innerHTML = `<input type="checkbox" data-element="${key}" ${state.config.elements[key] ? "checked" : ""}> <span>${elementLabels[key]}</span>`;
+                row.querySelector("input").addEventListener("change", event => {
+                    pushUndo();
+                    state.config.elements[key] = event.target.checked;
+                    if (key === "qrCode") state.config.elements.qrLabel = event.target.checked;
+                    updateScorePanel();
+                    updateGenerateSummary();
+                    renderAll();
+                });
                 container.appendChild(row);
             });
         }
 
-        // This shows the skipped participant details from the latest upload.
-        function renderInvalidParticipants(items) {
-            const container = document.getElementById("invalidParticipantsList");
+        function updateScorePanel() {
+            document.getElementById("scoreThresholdPanel").classList.toggle("hidden", !state.config.elements.score);
+        }
+
+        function renderPlaceholderHelper() {
+            const container = document.getElementById("placeholderList");
             container.innerHTML = "";
+            placeholders.forEach(token => {
+                const button = document.createElement("button");
+                button.type = "button";
+                button.className = "placeholder-token";
+                button.textContent = token;
+                button.addEventListener("click", () => insertPlaceholder(token));
+                container.appendChild(button);
+            });
+        }
 
-            if (!items.length) {
-                container.innerHTML = `<div class="empty">No skipped participants in the latest upload.</div>`;
-                return;
+        function insertPlaceholder(token) {
+            const textarea = document.getElementById("paragraphTemplate");
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            textarea.value = `${textarea.value.slice(0, start)}${token}${textarea.value.slice(end)}`;
+            textarea.focus();
+            textarea.selectionStart = textarea.selectionEnd = start + token.length;
+            state.config.paragraphTemplate = textarea.value;
+            renderAll();
+        }
+
+        function renderElementSelect() {
+            const select = document.getElementById("selectedElement");
+            select.innerHTML = "";
+            Object.keys(state.config.layout)
+                .filter(key => !state.config.layout[key].deleted)
+                .sort((a, b) => (state.config.layout[a].zIndex || 0) - (state.config.layout[b].zIndex || 0))
+                .forEach(key => {
+                    const option = document.createElement("option");
+                    option.value = key;
+                    option.textContent = labelForElement(key);
+                    select.appendChild(option);
+                });
+            if (!state.config.layout[state.selectedElement] || state.config.layout[state.selectedElement].deleted) {
+                state.selectedElement = select.options[0]?.value || "";
             }
+            select.value = state.selectedElement;
+        }
 
-            items.forEach(item => {
-                const card = document.createElement("div");
-                card.className = "reject-item";
+        function renderPresetSelect() {
+            const select = document.getElementById("presetSelect");
+            select.innerHTML = "";
+            (state.config.presets || []).forEach(preset => {
+                const option = document.createElement("option");
+                option.value = preset.id;
+                option.textContent = preset.name;
+                select.appendChild(option);
+            });
+        }
 
-                // Build the score line — show passing/total marks when the Excel sheet included them.
-                let scoreLine = `Score: ${escapeHtml(item.score)}`;
-                if (item.passing_marks) {
-                    scoreLine += ` | Passing Mark: ${escapeHtml(item.passing_marks)}`;
-                    if (item.total_marks) {
-                        scoreLine += ` / ${escapeHtml(item.total_marks)}`;
-                    }
+        function labelForElement(key) {
+            const box = state.config.layout[key];
+            const base = box?.source || key;
+            const label = elementLabels[base] || base;
+            if (box?.kind === "signatory" || base === "signatory") return box.name || label;
+            if (box?.kind === "text" && box.text) return box.text.slice(0, 28);
+            return key.includes("_copy_") ? `${label} Copy` : label;
+        }
+
+        function baseKey(key) {
+            return state.config.layout[key]?.source || key;
+        }
+
+        function isElementActive(key) {
+            const box = state.config.layout[key];
+            if (!box || box.deleted) return false;
+            const source = baseKey(key);
+            if (box.kind === "image" || box.kind === "shape") return true;
+            if (["institutionName", "certificateTitle", "introText", "studentName", "customParagraph", "courseName", "rollNumber", "heShe", "signatory"].includes(source)) return true;
+            return Boolean(state.config.elements[source]);
+        }
+
+        function activeElements() {
+            const order = state.config.elementOrder || Object.keys(state.config.layout);
+            return [...new Set([...order, ...Object.keys(state.config.layout)])]
+                .filter(isElementActive)
+                .sort((a, b) => (state.config.layout[a].zIndex || 0) - (state.config.layout[b].zIndex || 0));
+        }
+
+        function sampleTextForElement(key, nameOverride) {
+            const sample = { ...sampleStudent, NAME: nameOverride || sampleStudent.NAME, INSTITUTION_NAME: state.config.institutionName };
+            const source = baseKey(key);
+            if (source === "qrCode") return "QR";
+            if (boxKind(key) === "image") return "";
+            if (boxKind(key) === "shape") return "";
+            if (source === "institutionName") return state.config.institutionName;
+            if (source === "certificateTitle") return state.config.certificateTitle;
+            if (source === "introText") return state.config.introText;
+            if (source === "studentName") return sample.NAME;
+            if (source === "rollNumber") return `Roll No: ${sample.roll_number}`;
+            if (source === "customParagraph") return replacePlaceholders(state.config.paragraphTemplate, sample);
+            if (source === "courseName") return sample.COURSE_NAME;
+            if (source === "heShe") return sample.he_she;
+            if (source === "courseType") return `Course Type: ${sample.COURSE_TYPE}`;
+            if (source === "registrationNumber") return `Reg. No: ${sample.REGISTRATION_NUMBER}`;
+            if (source === "startDate") return `Start Date: ${sample.START_DATE}`;
+            if (source === "endDate") return `End Date: ${sample.END_DATE}`;
+            if (source === "score") return `Score Achieved: ${sample.SCORE}`;
+            if (source === "signatory") return state.config.layout[key].name || "Authorized Signatory";
+            if (source === "qrLabel") return "QR Verification";
+            if (state.config.layout[key].text) return state.config.layout[key].text;
+            return labelForElement(key);
+        }
+
+        function replacePlaceholders(template, values) {
+            return String(template || "").replace(/\{([a-zA-Z_]+)\}/g, (_, key) => values[key] ?? values[key.toUpperCase()] ?? values[key.toLowerCase()] ?? "");
+        }
+
+        function boxKind(key) {
+            return state.config.layout[key]?.kind || (baseKey(key) === "qrCode" ? "qr" : "text");
+        }
+
+        function decorateCanvas(canvas) {
+            canvas.style.backgroundImage = state.selectedTemplateUrl ? `url("${state.selectedTemplateUrl}")` : "";
+            canvas.style.backgroundSize = "100% 100%";
+        }
+
+        function renderAll(nameOverride) {
+            renderDesigner();
+            renderPreview(nameOverride);
+            syncControlsFromSelected();
+        }
+
+        function renderDesigner() {
+            if (!state.config) return;
+            const canvas = document.getElementById("certificateCanvas");
+            canvas.innerHTML = "";
+            decorateCanvas(canvas);
+            document.getElementById("designerScale").style.transform = `scale(${state.zoom})`;
+            document.getElementById("designerScale").style.width = `${state.canvasSize.width * state.zoom}px`;
+            document.getElementById("designerScale").style.height = `${state.canvasSize.height * state.zoom}px`;
+            activeElements().forEach(key => canvas.appendChild(createCanvasElement(key, false)));
+        }
+
+        function renderPreview(nameOverride) {
+            if (!state.config) return;
+            const canvas = document.getElementById("previewCanvas");
+            canvas.innerHTML = "";
+            decorateCanvas(canvas);
+            activeElements().forEach(key => canvas.appendChild(createCanvasElement(key, true, nameOverride)));
+        }
+
+        function createCanvasElement(key, previewOnly, nameOverride) {
+            const box = state.config.layout[key];
+            const source = baseKey(key);
+            const element = document.createElement("div");
+            element.className = `${previewOnly ? "preview-element" : "designer-element"} ${key === state.selectedElement && !previewOnly ? "selected" : ""} ${source === "qrCode" ? "qr-block" : ""} ${box.locked ? "locked" : ""}`;
+            element.dataset.key = key;
+            element.style.left = `${box.x}px`;
+            element.style.top = `${box.y}px`;
+            element.style.width = `${box.w}px`;
+            element.style.height = `${box.h}px`;
+            element.style.zIndex = box.zIndex || 1;
+            element.style.opacity = box.opacity ?? 1;
+            element.style.transform = `rotate(${Number(box.rotation) || 0}deg)`;
+            element.style.fontFamily = box.fontFamily;
+            element.style.fontWeight = box.fontWeight;
+            element.style.fontStyle = box.italic ? "italic" : "normal";
+            element.style.textDecoration = box.underline ? "underline" : "none";
+            element.style.color = box.color;
+            element.style.textAlign = box.align;
+            element.style.letterSpacing = `${Number(box.letterSpacing) || 0}px`;
+            if (box.kind === "image") {
+                element.classList.add("image-element");
+                if (box.imageUrl) {
+                    const img = document.createElement("img");
+                    img.src = `${API_BASE}${box.imageUrl}`;
+                    img.alt = labelForElement(key);
+                    element.appendChild(img);
+                } else {
+                    element.textContent = "Logo";
                 }
-
-                card.innerHTML = `
-                    <div>
-                        <strong>${escapeHtml(item.name)}</strong>
-                        <div class="mini">Row ${escapeHtml(String(item.rowNumber))} | Reg No: ${escapeHtml(item.reg_no)}</div>
-                        <div class="mini">Course: ${escapeHtml(item.course_name)}</div>
-                        <div class="mini">Email: ${escapeHtml(item.email)} | ${scoreLine}</div>
-                    </div>
-                    <div class="mini"><strong>Reason:</strong> ${escapeHtml(item.reason)}</div>
-                `;
-                container.appendChild(card);
-            });
+            } else if (box.kind === "shape") {
+                element.classList.add("shape-element");
+                element.style.background = box.color;
+                element.style.borderColor = box.color;
+            } else if (box.kind === "signatory" || source === "signatory") {
+                element.classList.add("signatory-element");
+                element.innerHTML = `<span class="signature-line"></span><span class="signatory-name">${escapeHtml(sampleTextForElement(key, nameOverride))}</span>`;
+            } else {
+                element.textContent = sampleTextForElement(key, nameOverride);
+            }
+            if (!previewOnly) {
+                element.addEventListener("pointerdown", startPointerAction);
+                element.addEventListener("click", event => {
+                    event.stopPropagation();
+                    selectElement(key);
+                });
+                element.addEventListener("contextmenu", event => showContextMenu(event, key));
+                ["nw", "ne", "sw", "se", "n", "s", "e", "w"].forEach(handle => {
+                    const grip = document.createElement("span");
+                    grip.className = `resize-handle handle-${handle}`;
+                    grip.dataset.handle = handle;
+                    element.appendChild(grip);
+                });
+            }
+            if (source !== "qrCode" && box.kind !== "image" && box.kind !== "shape" && box.kind !== "signatory") fitText(element, box.fontSize);
+            return element;
         }
 
-        // This turns course type numbers into a simple pie chart.
-        function renderPieChart(items) {
-            const total = items.reduce((sum, item) => sum + item.value, 0);
-            const pie = document.getElementById("pieChart");
+        function fitText(element, baseSize) {
+            let size = Number(baseSize) || 16;
+            element.style.fontSize = `${size}px`;
+            while (size > 8 && (element.scrollHeight > element.clientHeight || element.scrollWidth > element.clientWidth)) {
+                size -= 1;
+                element.style.fontSize = `${size}px`;
+            }
+        }
 
-            if (!total) {
-                pie.style.background = "conic-gradient(#dde3f5 0deg 360deg)";
+        function selectElement(key, shouldRender = true) {
+            if (!key || !state.config.layout[key]) return;
+            state.selectedElement = key;
+            document.getElementById("selectedElement").value = key;
+            syncControlsFromSelected();
+            if (shouldRender) renderDesigner();
+        }
+
+        function startPointerAction(event) {
+            const key = event.currentTarget.dataset.key;
+            const box = state.config.layout[key];
+            if (box.locked) {
+                selectElement(key);
+                setStatus("layoutStatus", "error", "This element is locked. Unlock it before moving or resizing.");
                 return;
             }
-
-            let currentAngle = 0;
-            const segments = items.map((item, index) => {
-                const slice = (item.value / total) * 360;
-                const start = currentAngle;
-                const end = currentAngle + slice;
-                currentAngle = end;
-                return `${palette[index % palette.length]} ${start}deg ${end}deg`;
-            });
-
-            pie.style.background = `conic-gradient(${segments.join(", ")})`;
+            event.preventDefault();
+            event.stopPropagation();
+            pushUndo();
+            selectElement(key, false);
+            const rect = document.getElementById("certificateCanvas").getBoundingClientRect();
+            const start = pointerToCanvas(event, rect);
+            state.drag = {
+                key,
+                handle: event.target.dataset.handle || "move",
+                start,
+                initial: { ...box },
+                rect
+            };
+            event.currentTarget.setPointerCapture(event.pointerId);
+            event.currentTarget.addEventListener("pointermove", updatePointerAction);
+            event.currentTarget.addEventListener("pointerup", endPointerAction, { once: true });
         }
 
-        // This shows the top courses as horizontal bars.
-        function renderCourseBars(items) {
-            const container = document.getElementById("courseBars");
-            container.innerHTML = "";
+        function pointerToCanvas(event, rect) {
+            return {
+                x: (event.clientX - rect.left) / state.zoom,
+                y: (event.clientY - rect.top) / state.zoom
+            };
+        }
 
-            if (!items.length) {
-                container.innerHTML = `<div class="empty">No course history found yet.</div>`;
-                return;
+        function updatePointerAction(event) {
+            if (!state.drag) return;
+            const box = state.config.layout[state.drag.key];
+            const point = pointerToCanvas(event, state.drag.rect);
+            const dx = point.x - state.drag.start.x;
+            const dy = point.y - state.drag.start.y;
+            const next = { ...state.drag.initial };
+            const handle = state.drag.handle;
+
+            if (handle === "move") {
+                next.x += dx;
+                next.y += dy;
+            } else {
+                if (handle.includes("e")) next.w += dx;
+                if (handle.includes("s")) next.h += dy;
+                if (handle.includes("w")) {
+                    next.x += dx;
+                    next.w -= dx;
+                }
+                if (handle.includes("n")) {
+                    next.y += dy;
+                    next.h -= dy;
+                }
             }
 
-            const max = Math.max(...items.map(item => item.value), 1);
-
-            items.slice(0, 8).forEach(item => {
-                const row = document.createElement("div");
-                row.className = "bar-row";
-                row.innerHTML = `
-                    <div class="row-between">
-                        <span>${item.label}</span>
-                        <strong>${item.value}</strong>
-                    </div>
-                    <div class="bar-track">
-                        <div class="bar-fill"></div>
-                    </div>
-                `;
-                row.querySelector(".bar-fill").style.width = `${(item.value / max) * 100}%`;
-                container.appendChild(row);
-            });
+            applyBoxBounds(next);
+            Object.assign(box, next);
+            updateElementDom(state.drag.key);
+            renderPreview();
         }
 
-        // This fills all dashboard cards with the latest server data.
+        function endPointerAction(event) {
+            event.currentTarget.removeEventListener("pointermove", updatePointerAction);
+            state.drag = null;
+            renderDesigner();
+            renderPreview();
+        }
+
+        function applyBoxBounds(box) {
+            box.w = Math.max(24, Math.min(box.w, state.canvasSize.width));
+            box.h = Math.max(18, Math.min(box.h, state.canvasSize.height));
+            box.x = Math.max(0, Math.min(box.x, state.canvasSize.width - box.w));
+            box.y = Math.max(0, Math.min(box.y, state.canvasSize.height - box.h));
+        }
+
+        function updateElementDom(key) {
+            const box = state.config.layout[key];
+            const element = document.querySelector(`#certificateCanvas [data-key="${CSS.escape(key)}"]`);
+            if (!element) return;
+            element.style.left = `${box.x}px`;
+            element.style.top = `${box.y}px`;
+            element.style.width = `${box.w}px`;
+            element.style.height = `${box.h}px`;
+            element.style.transform = `rotate(${Number(box.rotation) || 0}deg)`;
+            element.style.opacity = box.opacity ?? 1;
+            if (baseKey(key) !== "qrCode" && box.kind !== "image" && box.kind !== "signatory") fitText(element, box.fontSize);
+        }
+
+        function syncControlsFromSelected() {
+            const box = state.config?.layout?.[state.selectedElement];
+            if (!box) return;
+            const textPanel = document.getElementById("elementTextPanel");
+            const logoPanel = document.getElementById("logoPanel");
+            const isSignatory = box.kind === "signatory" || baseKey(state.selectedElement) === "signatory";
+            const isCustomText = Boolean(box.text);
+            textPanel.classList.toggle("hidden", !isSignatory && !isCustomText);
+            logoPanel.classList.toggle("hidden", box.kind !== "image");
+            document.getElementById("elementTextControl").value = isSignatory ? (box.name || "") : (box.text || "");
+            document.getElementById("fontSizeControl").value = Math.round(box.fontSize);
+            document.getElementById("fontFamilyControl").value = box.fontFamily;
+            document.getElementById("fontWeightControl").value = box.fontWeight;
+            document.getElementById("italicControl").checked = Boolean(box.italic);
+            document.getElementById("underlineControl").checked = Boolean(box.underline);
+            document.getElementById("textColorControl").value = box.color;
+            document.getElementById("alignControl").value = box.align;
+            document.getElementById("letterSpacingControl").value = box.letterSpacing || 0;
+            document.getElementById("opacityControl").value = box.opacity ?? 1;
+            document.getElementById("rotationControl").value = box.rotation || 0;
+            document.getElementById("lockElementBtn").textContent = box.locked ? "Unlock" : "Lock";
+        }
+
+        function updateSelectedStyle() {
+            const box = state.config.layout[state.selectedElement];
+            if (!box) return;
+            pushUndo();
+            box.fontSize = Number(document.getElementById("fontSizeControl").value) || box.fontSize;
+            box.fontFamily = document.getElementById("fontFamilyControl").value;
+            box.fontWeight = document.getElementById("fontWeightControl").value;
+            box.italic = document.getElementById("italicControl").checked;
+            box.underline = document.getElementById("underlineControl").checked;
+            box.color = document.getElementById("textColorControl").value;
+            box.align = document.getElementById("alignControl").value;
+            box.letterSpacing = Number(document.getElementById("letterSpacingControl").value) || 0;
+            box.opacity = Number(document.getElementById("opacityControl").value);
+            box.rotation = Number(document.getElementById("rotationControl").value) || 0;
+            if (box.kind === "signatory" || baseKey(state.selectedElement) === "signatory") {
+                box.name = document.getElementById("elementTextControl").value.trim() || "Authorized Signatory";
+            } else if (box.text !== undefined) {
+                box.text = document.getElementById("elementTextControl").value;
+            }
+            renderAll();
+        }
+
+        function deleteSelectedElement() {
+            const box = state.config.layout[state.selectedElement];
+            if (!box) return;
+            pushUndo();
+            box.deleted = true;
+            state.config.elementOrder = (state.config.elementOrder || []).filter(key => key !== state.selectedElement);
+            renderElementSelect();
+            renderAll();
+            setStatus("layoutStatus", "success", "Element deleted. Use Undo or Reset Layout to restore it.");
+        }
+
+        function duplicateSelectedElement() {
+            const sourceKey = state.selectedElement;
+            const box = state.config.layout[sourceKey];
+            if (!box) return;
+            pushUndo();
+            const copyKey = `${baseKey(sourceKey)}_copy_${Date.now()}`;
+            state.config.layout[copyKey] = {
+                ...clone(box),
+                source: baseKey(sourceKey),
+                x: Math.min(box.x + 28, state.canvasSize.width - box.w),
+                y: Math.min(box.y + 28, state.canvasSize.height - box.h),
+                zIndex: maxZIndex() + 1,
+                locked: false,
+                deleted: false
+            };
+            state.config.elementOrder = [...(state.config.elementOrder || []), copyKey];
+            renderElementSelect();
+            selectElement(copyKey);
+            renderAll();
+            setStatus("layoutStatus", "success", "Element duplicated.");
+        }
+
+        function defaultElementBox(overrides = {}) {
+            return {
+                source: "",
+                kind: "text",
+                x: 360,
+                y: 320,
+                w: 280,
+                h: 42,
+                fontSize: 18,
+                fontFamily: "Helvetica",
+                fontWeight: "normal",
+                italic: false,
+                underline: false,
+                color: "#20385f",
+                align: "center",
+                letterSpacing: 0,
+                opacity: 1,
+                rotation: 0,
+                zIndex: maxZIndex() + 1,
+                locked: false,
+                deleted: false,
+                ...overrides
+            };
+        }
+
+        function addElement(key, box) {
+            pushUndo();
+            state.config.layout[key] = box;
+            state.config.elements[key] = true;
+            state.config.elementOrder = [...(state.config.elementOrder || []), key];
+            renderElementSelect();
+            selectElement(key);
+            renderAll();
+        }
+
+        function addTextElement() {
+            const key = `text_${Date.now()}`;
+            addElement(key, defaultElementBox({ text: "Custom Text", underline: false }));
+            setStatus("layoutStatus", "success", "Text element added.");
+        }
+
+        function addShapeElement() {
+            const key = `shape_${Date.now()}`;
+            addElement(key, defaultElementBox({ kind: "shape", x: 390, y: 360, w: 220, h: 48, color: "#20385f", opacity: 0.18, shape: "rectangle" }));
+            setStatus("layoutStatus", "success", "Shape added.");
+        }
+
+        function addLogoElement(imageUrl = "") {
+            const key = state.config.layout.logo?.deleted ? "logo" : `logo_copy_${Date.now()}`;
+            const fallback = state.config.layout.logo || defaultElementBox({ kind: "image", w: 96, h: 96, x: 452, y: 42 });
+            addElement(key, {
+                ...clone(fallback),
+                kind: "image",
+                source: key === "logo" ? "" : "logo",
+                imageUrl: imageUrl || fallback.imageUrl || "",
+                deleted: false,
+                locked: false,
+                opacity: fallback.opacity ?? 1,
+                zIndex: maxZIndex() + 1
+            });
+            state.config.elements.logo = true;
+            setStatus("layoutStatus", imageUrl ? "success" : "info", imageUrl ? "Logo added." : "Logo placeholder added. Upload a logo file to replace it.");
+        }
+
+        function addSignatory(name = "") {
+            const key = `signatory_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+            const count = Object.values(state.config.layout).filter(box => box.source === "signatory" || box.kind === "signatory").length;
+            addElement(key, defaultElementBox({
+                source: "signatory",
+                kind: "signatory",
+                x: Math.min(90 + count * 240, state.canvasSize.width - 220),
+                y: 618,
+                w: 210,
+                h: 54,
+                fontSize: 12,
+                fontWeight: "bold",
+                name: name || `Signatory ${count + 1}`
+            }));
+            setStatus("layoutStatus", "success", "Signatory added.");
+        }
+
+        function setupSignatories() {
+            const count = Number(prompt("How many dignitaries/signatories will sign this certificate?", "1"));
+            if (!Number.isInteger(count) || count < 1) return;
+            pushUndo();
+            Object.entries(state.config.layout).forEach(([key, box]) => {
+                if (box.source === "signatory" || box.kind === "signatory") {
+                    box.deleted = true;
+                    state.config.elements[key] = false;
+                }
+            });
+            state.config.elementOrder = (state.config.elementOrder || []).filter(key => {
+                const box = state.config.layout[key];
+                return !(box?.source === "signatory" || box?.kind === "signatory");
+            });
+            const spacing = state.canvasSize.width / (count + 1);
+            for (let index = 0; index < count; index += 1) {
+                const name = prompt(`Enter signatory ${index + 1} name`, `Signatory ${index + 1}`) || `Signatory ${index + 1}`;
+                const key = `signatory_${Date.now()}_${index}`;
+                state.config.layout[key] = defaultElementBox({
+                    source: "signatory",
+                    kind: "signatory",
+                    x: Math.max(20, Math.min(spacing * (index + 1) - 105, state.canvasSize.width - 220)),
+                    y: 618,
+                    w: 210,
+                    h: 54,
+                    fontSize: 12,
+                    fontWeight: "bold",
+                    name
+                });
+                state.config.elements[key] = true;
+                state.config.elementOrder.push(key);
+            }
+            renderElementSelect();
+            selectElement(state.config.elementOrder[state.config.elementOrder.length - 1]);
+            renderAll();
+            setStatus("layoutStatus", "success", `${count} signatory block${count === 1 ? "" : "s"} created.`);
+        }
+
+        async function uploadLogo() {
+            const file = document.getElementById("logoFile").files[0];
+            if (!file) {
+                setStatus("layoutStatus", "error", "Choose a PNG, JPG, or JPEG logo first.");
+                return;
+            }
+            try {
+                const formData = new FormData();
+                formData.append("logo", file);
+                const res = await fetch(`${API_BASE}/upload-logo`, { method: "POST", body: formData });
+                const data = await res.json();
+                if (!data.success) throw new Error(data.message || "Logo upload failed");
+                const box = state.config.layout[state.selectedElement];
+                if (!box || box.kind !== "image") {
+                    addLogoElement(data.logo.url);
+                } else {
+                    pushUndo();
+                    box.imageUrl = data.logo.url;
+                    box.deleted = false;
+                    state.config.elements.logo = true;
+                    renderAll();
+                }
+                document.getElementById("logoFile").value = "";
+                setStatus("layoutStatus", "success", "Logo uploaded and applied.");
+            } catch (error) {
+                setStatus("layoutStatus", "error", error.message || "Logo upload failed.");
+            }
+        }
+
+        function toggleSelectedLock() {
+            const box = state.config.layout[state.selectedElement];
+            if (!box) return;
+            pushUndo();
+            box.locked = !box.locked;
+            syncControlsFromSelected();
+            renderAll();
+            setStatus("layoutStatus", "success", box.locked ? "Element locked." : "Element unlocked.");
+        }
+
+        function maxZIndex() {
+            return Math.max(...Object.values(state.config.layout).map(box => Number(box.zIndex) || 0), 0);
+        }
+
+        function moveLayer(delta) {
+            const box = state.config.layout[state.selectedElement];
+            if (!box) return;
+            pushUndo();
+            box.zIndex = Math.max(0, (Number(box.zIndex) || 0) + delta);
+            state.config.elementOrder = activeElements();
+            renderAll();
+            setStatus("layoutStatus", "success", delta > 0 ? "Element brought forward." : "Element sent backward.");
+        }
+
+        function setZoom(value) {
+            state.zoom = Math.max(0.45, Math.min(1.6, Number(value) || 1));
+            document.getElementById("zoomValue").textContent = `${Math.round(state.zoom * 100)}%`;
+            renderDesigner();
+        }
+
+        async function resetLayout() {
+            try {
+                const res = await fetch(`${API_BASE}/certificate-config/reset`, { method: "POST" });
+                const data = await res.json();
+                if (!data.success) throw new Error(data.message || "Reset failed");
+                state.config = data.config;
+                state.canvasSize = data.canvasSize;
+                state.selectedElement = "studentName";
+                state.undoStack = [];
+                hydrateConfigForm();
+                renderAll();
+                setStatus("layoutStatus", "success", "Default layout restored.");
+            } catch (error) {
+                setStatus("layoutStatus", "error", error.message || "Layout reset failed.");
+            }
+        }
+
+        async function saveConfig() {
+            try {
+                collectConfigFromForm();
+                const res = await fetch(`${API_BASE}/certificate-config`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(state.config)
+                });
+                const data = await res.json();
+                if (!data.success) throw new Error(data.message || "Save failed");
+                state.config = data.config;
+                state.canvasSize = data.canvasSize;
+                hydrateConfigForm();
+                renderAll();
+                setStatus("configStatus", "success", "Certificate configuration saved.");
+                setStatus("paragraphStatus", "success", "Certificate paragraph saved.");
+                setStatus("layoutStatus", "success", "Layout saved and will be used for generation.");
+                return true;
+            } catch (error) {
+                setStatus("configStatus", "error", error.message || "Configuration save failed.");
+                setStatus("layoutStatus", "error", error.message || "Layout save failed.");
+                return false;
+            }
+        }
+
+        async function savePreset() {
+            try {
+                collectConfigFromForm();
+                const name = document.getElementById("presetName").value.trim() || "Custom Preset";
+                const res = await fetch(`${API_BASE}/certificate-presets`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ name, config: state.config })
+                });
+                const data = await res.json();
+                if (!data.success) throw new Error(data.message || "Preset save failed");
+                state.config.presets = data.presets;
+                renderPresetSelect();
+                setStatus("layoutStatus", "success", "Preset saved.");
+            } catch (error) {
+                setStatus("layoutStatus", "error", error.message || "Preset save failed.");
+            }
+        }
+
+        async function loadPreset() {
+            const id = document.getElementById("presetSelect").value;
+            if (!id) return;
+            try {
+                const res = await fetch(`${API_BASE}/certificate-presets/${encodeURIComponent(id)}/load`, { method: "POST" });
+                const data = await res.json();
+                if (!data.success) throw new Error(data.message || "Preset load failed");
+                state.config = data.config;
+                state.canvasSize = data.canvasSize;
+                hydrateConfigForm();
+                renderAll();
+                setStatus("layoutStatus", "success", "Preset loaded.");
+            } catch (error) {
+                setStatus("layoutStatus", "error", error.message || "Preset load failed.");
+            }
+        }
+
+        async function duplicatePreset() {
+            const id = document.getElementById("presetSelect").value;
+            if (!id) return;
+            try {
+                const res = await fetch(`${API_BASE}/certificate-presets/${encodeURIComponent(id)}/duplicate`, { method: "POST" });
+                const data = await res.json();
+                if (!data.success) throw new Error(data.message || "Preset duplicate failed");
+                state.config.presets = data.presets;
+                renderPresetSelect();
+                setStatus("layoutStatus", "success", "Preset duplicated.");
+            } catch (error) {
+                setStatus("layoutStatus", "error", error.message || "Preset duplicate failed.");
+            }
+        }
+
+        async function deletePreset() {
+            const id = document.getElementById("presetSelect").value;
+            if (!id) return;
+            try {
+                const res = await fetch(`${API_BASE}/certificate-presets/${encodeURIComponent(id)}`, { method: "DELETE" });
+                const data = await res.json();
+                if (!data.success) throw new Error(data.message || "Preset delete failed");
+                state.config.presets = data.presets;
+                renderPresetSelect();
+                setStatus("layoutStatus", "success", "Preset deleted.");
+            } catch (error) {
+                setStatus("layoutStatus", "error", error.message || "Preset delete failed.");
+            }
+        }
+
         function updateDashboard(stats) {
             state.stats = stats;
             document.getElementById("totalCertificates").textContent = stats.totalCertificatesGenerated || 0;
@@ -380,78 +1296,147 @@
             document.getElementById("uploadInvalid").textContent = stats.currentUpload?.invalidRows || 0;
             document.getElementById("selectedTemplateName").textContent = stats.selectedTemplate?.name || "No template selected";
             document.getElementById("generateTemplateName").textContent = stats.selectedTemplate?.name || "No template selected";
-            document.getElementById("readyCount").textContent = stats.currentUpload?.validRows || 0;
             document.getElementById("skipCount").textContent = stats.currentUpload?.invalidRows || 0;
-
-            const courseNames = stats.currentUpload?.courseNames?.length
-                ? stats.currentUpload.courseNames.join(", ")
-                : "No uploaded sheet yet.";
-            document.getElementById("uploadCourseNames").textContent = courseNames;
-
+            document.getElementById("uploadCourseNames").textContent = stats.currentUpload?.courseNames?.length ? stats.currentUpload.courseNames.join(", ") : "No uploaded sheet yet.";
             renderPieChart(stats.courseTypes || []);
             renderLegend(stats.courseTypes || [], "courseTypeLegend");
             renderCourseBars(stats.courseNames || []);
             renderInvalidParticipants(stats.currentUpload?.invalidParticipants || []);
-
+            updateGenerateSummary();
             if (stats.latestGeneration?.zipUrl) {
                 const button = document.getElementById("downloadZipBtn");
                 button.dataset.url = `${API_BASE}${stats.latestGeneration.zipUrl}`;
                 button.classList.remove("hidden");
             }
-
-            if (state.activeView) {
-                showView(state.activeView);
-            }
         }
 
-        // This gets dashboard numbers and chart data from the API.
+        function updateGenerateSummary() {
+            if (!state.config) return;
+            const total = Number(state.stats?.currentUpload?.validRows || 0);
+            const scoreEnabled = Boolean(state.config.elements.score);
+            document.getElementById("generateTotalCount").textContent = Number(state.stats?.currentUpload?.totalRows || 0);
+            document.getElementById("eligiblePreviewCount").textContent = scoreEnabled ? "Calculated during generation" : total;
+            document.getElementById("ineligiblePreviewCount").textContent = scoreEnabled ? "Calculated during generation" : 0;
+            document.getElementById("qualifyingScoreText").textContent = scoreEnabled ? state.config.minimumQualifyingScore : "Not applied";
+            document.getElementById("qrSettingText").textContent = state.config.elements.qrCode && !state.config.layout.qrCode?.deleted ? "Enabled" : "Disabled";
+            document.getElementById("generatedCountText").textContent = state.lastGeneratedCount || 0;
+        }
+
+        function renderLegend(items, containerId) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = "";
+            if (!items.length) {
+                container.innerHTML = `<div class="empty">No chart data available yet.</div>`;
+                return;
+            }
+            items.forEach((item, index) => {
+                const row = document.createElement("div");
+                row.className = "legend-item";
+                row.innerHTML = `<div><span class="swatch"></span>${escapeHtml(item.label)}</div><strong>${item.value}</strong>`;
+                row.querySelector(".swatch").style.background = palette[index % palette.length];
+                container.appendChild(row);
+            });
+        }
+
+        function renderPieChart(items) {
+            const total = items.reduce((sum, item) => sum + Number(item.value || 0), 0);
+            const pie = document.getElementById("pieChart");
+            if (!total) {
+                pie.style.background = "conic-gradient(#dde3f5 0deg 360deg)";
+                return;
+            }
+            let currentAngle = 0;
+            const segments = items.map((item, index) => {
+                const slice = (Number(item.value || 0) / total) * 360;
+                const start = currentAngle;
+                currentAngle += slice;
+                return `${palette[index % palette.length]} ${start}deg ${currentAngle}deg`;
+            });
+            pie.style.background = `conic-gradient(${segments.join(", ")})`;
+        }
+
+        function renderCourseBars(items) {
+            const container = document.getElementById("courseBars");
+            container.innerHTML = "";
+            if (!items.length) {
+                container.innerHTML = `<div class="empty">No course history found yet.</div>`;
+                return;
+            }
+            const max = Math.max(...items.map(item => Number(item.value || 0)), 1);
+            items.slice(0, 8).forEach(item => {
+                const row = document.createElement("div");
+                row.className = "bar-row";
+                row.innerHTML = `<div class="row-between"><span>${escapeHtml(item.label)}</span><strong>${item.value}</strong></div><div class="bar-track"><div class="bar-fill"></div></div>`;
+                row.querySelector(".bar-fill").style.width = `${(Number(item.value || 0) / max) * 100}%`;
+                container.appendChild(row);
+            });
+        }
+
+        function renderInvalidParticipants(items) {
+            const container = document.getElementById("invalidParticipantsList");
+            container.innerHTML = "";
+            if (!items.length) {
+                container.innerHTML = `<div class="empty">No skipped participants in the latest upload.</div>`;
+                return;
+            }
+            items.forEach(item => {
+                const card = document.createElement("div");
+                card.className = "reject-item";
+                card.innerHTML = `
+                    <div>
+                        <strong>${escapeHtml(item.name)}</strong>
+                        <div class="mini">Row ${escapeHtml(String(item.rowNumber))} | Reg No: ${escapeHtml(item.reg_no)}</div>
+                        <div class="mini">Roll No: ${escapeHtml(item.roll_number || "")} | He/She: ${escapeHtml(item.he_she || "")}</div>
+                        <div class="mini">Course: ${escapeHtml(item.course_name)}</div>
+                        <div class="mini">Email: ${escapeHtml(item.email)} | Score: ${escapeHtml(item.score)}</div>
+                    </div>
+                    <div class="mini"><strong>Reason:</strong> ${escapeHtml(item.reason)}</div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        async function loadConfig() {
+            const res = await fetch(`${API_BASE}/certificate-config`);
+            const data = await res.json();
+            if (!data.success) throw new Error(data.message || "Configuration load failed");
+            state.config = data.config;
+            state.canvasSize = data.canvasSize;
+            hydrateConfigForm();
+            renderAll();
+        }
+
         async function loadStats() {
-            try {
-                const res = await fetch(`${API_BASE}/stats`);
-                const data = await res.json();
-                updateDashboard(data);
-            } catch (error) {
-                setStatus("generateStatus", "error", "Could not load dashboard statistics from the server.");
-                console.error(error);
-            }
+            const res = await fetch(`${API_BASE}/stats`);
+            const data = await res.json();
+            updateDashboard(data);
         }
 
-        // This loads built-in and uploaded templates for selection.
         async function loadTemplates() {
-            try {
-                const res = await fetch(`${API_BASE}/templates-list`);
-                const templates = await res.json();
-                state.templates = templates;
-
-                const container = document.getElementById("templateList");
-                container.innerHTML = "";
-
-                templates.forEach(template => {
-                    const card = document.createElement("div");
-                    card.className = `card template-item ${template.selected ? "selected" : ""}`;
-                    card.innerHTML = `
-                        <img src="${API_BASE}${template.url}" alt="${template.name}">
-                        <div class="row-between row-center">
-                            <div>
-                                <strong>${template.source === "uploaded" ? "Custom" : "Built-in"}</strong>
-                                <div class="mini">${template.name}</div>
-                            </div>
-                            <button class="secondary">Select</button>
-                        </div>
-                    `;
-
-                    // These let the user select a template from the button or image.
-                    card.querySelector("button").addEventListener("click", () => selectTemplate(template.name, template.source));
-                    card.querySelector("img").addEventListener("click", () => selectTemplate(template.name, template.source));
-                    container.appendChild(card);
-                });
-            } catch (error) {
-                setStatus("templateStatus", "error", "Could not load certificate templates.");
-                console.error(error);
-            }
+            const res = await fetch(`${API_BASE}/templates-list`);
+            const templates = await res.json();
+            state.templates = templates;
+            const selected = templates.find(template => template.selected) || templates[0];
+            state.selectedTemplateUrl = selected ? `${API_BASE}${selected.url}` : "";
+            const container = document.getElementById("templateList");
+            container.innerHTML = "";
+            templates.forEach(template => {
+                const card = document.createElement("div");
+                card.className = `card template-item ${template.selected ? "selected" : ""}`;
+                card.innerHTML = `
+                    <img src="${API_BASE}${template.url}" alt="${escapeHtml(template.name)}">
+                    <div class="row-between row-center">
+                        <div><strong>${template.source === "uploaded" ? "Custom" : "Built-in"}</strong><div class="mini">${escapeHtml(template.name)}</div></div>
+                        <button type="button" class="secondary">Select</button>
+                    </div>
+                `;
+                card.querySelector("button").addEventListener("click", () => selectTemplate(template.name, template.source));
+                card.querySelector("img").addEventListener("click", () => selectTemplate(template.name, template.source));
+                container.appendChild(card);
+            });
+            renderAll();
         }
 
-        // This tells the server which template should be used next.
         async function selectTemplate(template, source) {
             try {
                 const res = await fetch(`${API_BASE}/select-template`, {
@@ -460,139 +1445,95 @@
                     body: JSON.stringify({ template, source })
                 });
                 const data = await res.json();
-
-                if (!data.success) {
-                    throw new Error(data.message || "Template selection failed");
-                }
-
-                setStatus("templateStatus", "success", `${template} selected for certificate generation.`);
+                if (!data.success) throw new Error(data.message || "Template selection failed");
+                setStatus("templateStatus", "success", `${template} selected.`);
                 await Promise.all([loadTemplates(), loadStats()]);
             } catch (error) {
                 setStatus("templateStatus", "error", error.message || "Template selection failed.");
             }
         }
 
-        // This uploads the Excel file and checks which rows are valid.
-        async function uploadExcel() {
-            const file = document.getElementById("excelFile").files[0];
-            if (!file) {
-                setStatus("uploadStatus", "error", "Choose an Excel sheet before uploading.");
-                return;
-            }
-
-            try {
-                setStatus("uploadStatus", "info", "Uploading and validating your Excel sheet...");
-                const formData = new FormData();
-                formData.append("file", file);
-
-                const res = await fetch(`${API_BASE}/upload-excel`, {
-                    method: "POST",
-                    body: formData
-                });
-                const data = await res.json();
-
-                if (!data.success) {
-                    throw new Error(data.message || "Excel upload failed");
-                }
-
-                setStatus(
-                    "uploadStatus",
-                    "success",
-                    `Upload complete. Total rows: ${data.total}, valid rows: ${data.valid}, invalid rows: ${data.invalid}.`
-                );
-
-                await loadStats();
-            } catch (error) {
-                setStatus("uploadStatus", "error", error.message || "Excel upload failed.");
-                console.error(error);
-            }
-        }
-
-        // This uploads a custom certificate template image.
         async function uploadTemplate() {
             const file = document.getElementById("templateFile").files[0];
             if (!file) {
                 setStatus("templateStatus", "error", "Choose a template image before uploading.");
                 return;
             }
-
             try {
-                setStatus("templateStatus", "info", "Uploading custom template...");
                 const formData = new FormData();
                 formData.append("template", file);
-
-                const res = await fetch(`${API_BASE}/upload-template`, {
-                    method: "POST",
-                    body: formData
-                });
+                const res = await fetch(`${API_BASE}/upload-template`, { method: "POST", body: formData });
                 const data = await res.json();
-
-                if (!data.success) {
-                    throw new Error(data.message || "Template upload failed");
-                }
-
-                setStatus("templateStatus", "success", "Custom template uploaded and selected successfully.");
+                if (!data.success) throw new Error(data.message || "Template upload failed");
                 document.getElementById("templateFile").value = "";
+                setStatus("templateStatus", "success", "Custom template uploaded and selected.");
                 await Promise.all([loadTemplates(), loadStats()]);
             } catch (error) {
                 setStatus("templateStatus", "error", error.message || "Template upload failed.");
-                console.error(error);
             }
         }
 
-        // This asks the server to generate all certificate PDFs and the ZIP file.
+        async function uploadExcel() {
+            const file = document.getElementById("excelFile").files[0];
+            if (!file) {
+                setStatus("uploadStatus", "error", "Choose an Excel sheet before uploading.");
+                return;
+            }
+            try {
+                const formData = new FormData();
+                formData.append("file", file);
+                const res = await fetch(`${API_BASE}/upload-excel`, { method: "POST", body: formData });
+                const data = await res.json();
+                if (!data.success) throw new Error(data.message || "Excel upload failed");
+                setStatus("uploadStatus", "success", `Upload complete. Total: ${data.total}, usable: ${data.valid}, invalid: ${data.invalid}.`);
+                await loadStats();
+            } catch (error) {
+                setStatus("uploadStatus", "error", error.message || "Excel upload failed.");
+            }
+        }
+
+        function downloadSampleExcel() {
+            window.location.href = `${API_BASE}/sample-excel`;
+        }
+
         async function generateCertificates() {
             try {
                 showView("generate");
+                const saved = await saveConfig();
+                if (!saved) return;
                 setStatus("generateStatus", "info", "Generating certificates and creating ZIP file...");
                 const res = await fetch(`${API_BASE}/generate`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ employeeEmail })
+                    body: JSON.stringify({ employeeEmail, config: collectConfigFromForm() })
                 });
                 const data = await res.json();
-
-                if (!data.success) {
-                    throw new Error(data.message || "Certificate generation failed");
-                }
-
+                if (!data.success) throw new Error(data.message || "Certificate generation failed");
+                state.lastGeneratedCount = data.generatedCount || 0;
+                document.getElementById("eligiblePreviewCount").textContent = data.eligibleCount;
+                document.getElementById("ineligiblePreviewCount").textContent = data.ineligibleCount;
+                document.getElementById("generatedCountText").textContent = data.generatedCount;
                 const emailMessage = data.emailMessage || "Email status unavailable.";
-                setStatus(
-                    "generateStatus",
-                    "success",
-                    `${data.generatedCount} certificates generated. ${data.failedCount} rows were skipped. ${data.emailSent ? "Admin email sent." : `Admin email not sent. ${emailMessage}`}`
-                );
-
+                setStatus("generateStatus", "success", `Total: ${(data.eligibleCount || 0) + (data.ineligibleCount || 0)}. Eligible: ${data.eligibleCount}. Ineligible: ${data.ineligibleCount}. Generated: ${data.generatedCount}. ${data.emailSent ? "Admin email sent." : `Admin email not sent. ${emailMessage}`}`);
                 const downloadButton = document.getElementById("downloadZipBtn");
                 downloadButton.dataset.url = `${API_BASE}${data.zipUrl}`;
                 downloadButton.classList.remove("hidden");
-
                 await loadStats();
                 showView("generate");
             } catch (error) {
                 setStatus("generateStatus", "error", error.message || "Certificate generation failed.");
-                console.error(error);
             }
         }
 
-        // This downloads the ZIP file after generation is complete.
         async function downloadZipFile() {
-            const downloadButton = document.getElementById("downloadZipBtn");
-            const url = downloadButton.dataset.url;
-
+            const url = document.getElementById("downloadZipBtn").dataset.url;
             if (!url) {
                 setStatus("generateStatus", "error", "No ZIP file is ready to download yet.");
                 return;
             }
-
             try {
-                setStatus("generateStatus", "info", "Preparing ZIP download...");
                 const res = await fetch(url);
-
-                if (!res.ok) {
-                    throw new Error("ZIP download failed");
-                }
-
+                if (!res.ok) throw new Error("ZIP download failed");
                 const blob = await res.blob();
                 const tempUrl = window.URL.createObjectURL(blob);
                 const link = document.createElement("a");
@@ -605,12 +1546,15 @@
                 setStatus("generateStatus", "success", "ZIP file downloaded successfully.");
             } catch (error) {
                 setStatus("generateStatus", "error", error.message || "ZIP download failed.");
-                console.error(error);
             }
         }
 
-        // This loads the first dashboard data when the page opens.
-        Promise.all([loadStats(), loadTemplates()]).then(() => showView(state.activeView));
+        Promise.all([loadConfig(), loadStats(), loadTemplates()])
+            .then(() => showView(state.activeView))
+            .catch(error => {
+                console.error(error);
+                setStatus("layoutStatus", "error", error.message || "Dashboard failed to initialize.");
+            });
     </script>
 </body>
 </html>
